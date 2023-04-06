@@ -1,0 +1,27 @@
+.root{
+  -fx-background-color: #688;
+  -fx-font-size:20 ;
+}
+
+
+.button{
+  /*混合颜色样式*/
+  -fx-background-color: linear-gradient(#dc9656,#ab4642);
+  -fx-text-fill: #ffffff;
+  /*圆形按钮*/
+  -fx-background-radius: 6;
+}
+
+
+.button-blue{
+  -fx-background-color: linear-gradient(#dc9634,#bc23fc);
+  -fx-text-fill: #198;
+  -fx-background-radius: 6;
+}
+
+#bold-label{
+  /*-fx-highlight-text-fill: ;*/
+  -fx-text-fill: #dd8190;
+  -fx-font-weight:bold;
+  -fx-font-size:30 ;
+}

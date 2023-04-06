@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox fx:id="vBox" alignment="CENTER" prefHeight="416.0" prefWidth="632.0" spacing="20.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.edu.sustech.cs209.chatting.client.Controller.ConnectController">
+  <padding>
+    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+  </padding>
+  <children>
+    <VBox alignment="CENTER" prefHeight="253.0" prefWidth="577.0">
+      <children>
+
+        <Label id="aaa" alignment="CENTER" text="连接服务器" textAlignment="CENTER">
+          <font>
+            <Font size="31.0" />
+          </font>
+               <VBox.margin>
+                  <Insets bottom="30.0" />
+               </VBox.margin>
+        </Label>
+        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+          <children>
+            <Label text="host: ">
+              <HBox.margin>
+                <Insets right="25.0" />
+              </HBox.margin>
+            </Label>
+            <TextField fx:id="host" alignment="CENTER" prefHeight="36.0" prefWidth="304.0" promptText="输入主机ip" text="localhost" />
+          </children>
+        </HBox>
+        <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+          <children>
+            <Label text="port: ">
+              <HBox.margin>
+                <Insets />
+              </HBox.margin>
+            </Label>
+            <TextField fx:id="StringPort" alignment="CENTER" prefHeight="36.0" prefWidth="303.0" promptText="输入端口号" text="8080">
+              <HBox.margin>
+                <Insets left="25.0" />
+              </HBox.margin>
+            </TextField>
+          </children>
+        </HBox>
+        <HBox alignment="CENTER" prefHeight="115.0" prefWidth="577.0">
+          <children>
+            <Button onAction="#onButtonConnectClick" prefHeight="45.0" prefWidth="120.0" text="Connect">
+              <HBox.margin>
+                <Insets left="40.0" right="50.0" />
+              </HBox.margin>
+            </Button>
+          </children>
+          <VBox.margin>
+            <Insets />
+          </VBox.margin>
+        </HBox>
+      </children>
+    </VBox>
+  </children>
+</VBox>

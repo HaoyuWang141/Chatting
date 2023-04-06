@@ -1,6 +1,8 @@
-package cn.edu.sustech.cs209.chatting.client;
+package cn.edu.sustech.cs209.chatting.client.Controller;
 
+import cn.edu.sustech.cs209.chatting.client.Client;
 import cn.edu.sustech.cs209.chatting.common.Message;
+import cn.edu.sustech.cs209.chatting.common.MessageType;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -18,33 +20,46 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Controller implements Initializable {
+public class ChatController implements Initializable {
 
+    private String host = "localhost";
+    private int port = 8080;
     @FXML
     ListView<Message> chatContentList;
-
-    String username;
+    @FXML
+    ListView<String> chatGroupNameList;
+    private Client client;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        client = Client.getClient();
 
         Dialog<String> dialog = new TextInputDialog();
         dialog.setTitle("Login");
         dialog.setHeaderText(null);
         dialog.setContentText("Username:");
+        dialog.setContentText("Password:");
 
-        Optional<String> input = dialog.showAndWait();
-        if (input.isPresent() && !input.get().isEmpty()) {
-            /*
-               TODO: Check if there is a user with the same name among the currently logged-in users,
-                     if so, ask the user to change the username
-             */
-            username = input.get();
-        } else {
-            System.out.println("Invalid username " + input + ", exiting");
+        Optional<String> username = dialog.showAndWait();
+        Optional<String> pwd = dialog.showAndWait();
+        if (!username.isPresent() || username.get().isEmpty()) {
+            System.out.println("Invalid username " + username + ", input again");
             Platform.exit();
+        } else if (username.get().equals("all")) {
+            System.out.println("username can not be all");
+            Platform.exit();
+        } else if (username.get().equals("Server")) {
+            System.out.println("username can not be Server");
+            Platform.exit();
+        } else {
+            /*
+                TODO: Check if there is a user with the same name among the currently logged-in users,
+                 if so, ask the user to change the username
+            */
+            if (true) {
+                client.setName(username.get());
+            }
         }
-
         chatContentList.setCellFactory(new MessageCellFactory());
     }
 
@@ -76,14 +91,13 @@ public class Controller implements Initializable {
     }
 
     /**
-     * A new dialog should contain a multi-select list, showing all user's name.
-     * You can select several users that will be joined in the group chat, including yourself.
+     * A new dialog should contain a multi-select list, showing all user's name. You can select
+     * several users that will be joined in the group chat, including yourself.
      * <p>
-     * The naming rule for group chats is similar to WeChat:
-     * If there are > 3 users: display the first three usernames, sorted in lexicographic order, then use ellipsis with the number of users, for example:
-     * UserA, UserB, UserC... (10)
-     * If there are <= 3 users: do not display the ellipsis, for example:
-     * UserA, UserB (2)
+     * The naming rule for group chats is similar to WeChat: If there are > 3 users: display the
+     * first three usernames, sorted in lexicographic order, then use ellipsis with the number of
+     * users, for example: UserA, UserB, UserC... (10) If there are <= 3 users: do not display the
+     * ellipsis, for example: UserA, UserB (2)
      */
     @FXML
     public void createGroupChat() {
@@ -92,8 +106,8 @@ public class Controller implements Initializable {
     /**
      * Sends the message to the <b>currently selected</b> chat.
      * <p>
-     * Blank messages are not allowed.
-     * After sending the message, you should clear the text input field.
+     * Blank messages are not allowed. After sending the message, you should clear the text input
+     * field.
      */
     @FXML
     public void doSendMessage() {
@@ -101,10 +115,12 @@ public class Controller implements Initializable {
     }
 
     /**
-     * You may change the cell factory if you changed the design of {@code Message} model.
-     * Hint: you may also define a cell factory for the chats displayed in the left panel, or simply override the toString method.
+     * You may change the cell factory if you changed the design of {@code Message} model. Hint: you
+     * may also define a cell factory for the chats displayed in the left panel, or simply override
+     * the toString method.
      */
     private class MessageCellFactory implements Callback<ListView<Message>, ListCell<Message>> {
+
         @Override
         public ListCell<Message> call(ListView<Message> param) {
             return new ListCell<Message>() {
@@ -124,7 +140,7 @@ public class Controller implements Initializable {
                     nameLabel.setWrapText(true);
                     nameLabel.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
 
-                    if (username.equals(msg.getSentBy())) {
+                    if (client.getName().equals(msg.getSentBy())) {
                         wrapper.setAlignment(Pos.TOP_RIGHT);
                         wrapper.getChildren().addAll(msgLabel, nameLabel);
                         msgLabel.setPadding(new Insets(0, 20, 0, 0));
