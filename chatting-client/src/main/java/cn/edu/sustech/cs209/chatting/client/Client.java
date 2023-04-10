@@ -1,7 +1,13 @@
 package cn.edu.sustech.cs209.chatting.client;
 
+import cn.edu.sustech.cs209.chatting.client.Controller.ChatController;
+import cn.edu.sustech.cs209.chatting.client.Controller.LoginController;
+import cn.edu.sustech.cs209.chatting.client.Controller.SignUpController;
+import cn.edu.sustech.cs209.chatting.common.LocalGroup;
 import cn.edu.sustech.cs209.chatting.common.Message;
-import cn.edu.sustech.cs209.chatting.common.MessageType;
+import cn.edu.sustech.cs209.chatting.common.Request;
+import cn.edu.sustech.cs209.chatting.common.RequestType;
+import cn.edu.sustech.cs209.chatting.common.User;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -9,8 +15,9 @@ import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 
 public class Client {
 
@@ -21,9 +28,9 @@ public class Client {
     private ObjectOutputStream out;
     private Scanner scanner;
     private String name;
-    private List<Map<Integer, String>> groups; // key:id,value:group name
-    private List<Message> messages;
     private Socket socket;
+    public ChatController chatController;
+    public Long time;
 
     private Client(String host, int port) {
         this.host = host;
@@ -31,9 +38,6 @@ public class Client {
     }
 
     public static void Connect(String host, int port) throws IOException {
-        if (client != null) {
-            client.close();
-        }
         client = new Client(host, port);
         client.start();
     }
@@ -49,28 +53,47 @@ public class Client {
             out = new ObjectOutputStream(socket.getOutputStream());
             in = new ObjectInputStream(socket.getInputStream());
             Thread receiveThread = new Thread(() -> {
-                Message message;
                 while (true) {
                     try {
-                        message = (Message) in.readObject();
-                        System.out.println("Message from Server: " + message.getData());
-                        switch (message.getType()) {
-                            case LoginSuccess:
-                                System.out.println(message.getData());
-
+                        Request<?> request = (Request) in.readObject();
+//                        System.out.println("Message from Server: " + request.getInfo());
+                        switch (request.getType()) {
+                            case Signup:
+                                SignUpController.getSignUpController().getOos()
+                                    .writeObject(request);
                                 break;
-                            case LoginFail:
-                                System.out.println(message.getData());
-
+                            case Login:
+                                LoginController.getLoginController().getOos()
+                                    .writeObject(request);
                                 break;
-                            case RequestSuccess:
+                            case SendMessage:
+//                                System.out.println("CLient收到了返回值SendMessage");
                                 break;
-                            case RequestFail:
-                                System.out.println(message.getData());
-
+                            case UserList:
+                                chatController.setUserList((List<User>) request.getObj());
+                                break;
+                            case ChatGroupList:
+                                chatController.setChatGroupList(
+                                    (List<LocalGroup>) request.getObj());
+                                break;
+                            case ChatGroupMessages:
+                                chatController.setChatContentList((List<Message>) request.getObj());
+                                break;
+                            case CreateChatGroup:
+                                chatController.setCurrentChatId((Integer) request.getObj());
                                 break;
                         }
-                    } catch (ClassNotFoundException | IOException e) {
+                    } catch (NullPointerException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                        if (chatController != null) {
+                            chatController.serverDown();
+                        } else {
+                            System.exit(1);
+                        }
+                        break;
+                    } catch (ClassNotFoundException e) {
                         e.printStackTrace();
                         System.exit(1);
                     }
@@ -89,9 +112,14 @@ public class Client {
         }
     }
 
-    public void sendMessage(String sendBy, int sendTo, String data, MessageType type)
-        throws IOException {
-        Message message = new Message(System.currentTimeMillis(), sendBy, sendTo, data, type);
+    public <T> void sendRequest(RequestType type, String info, T obj) throws IOException {
+        Request<T> request = new Request<>(type, true, info, obj);
+        out.writeObject(request);
+        out.flush();
+    }
+
+    public void sendMessage(String sendBy, int sendTo, String data) throws IOException {
+        Message message = new Message(sendBy, sendTo, data);
         out.writeObject(message);
         out.flush();
     }
@@ -106,11 +134,17 @@ public class Client {
 
     public void close() {
         try {
-            if (!socket.isClosed()) {
+            if (socket != null && !socket.isClosed()) {
+                sendRequest(RequestType.Disconnect, null, null);
                 socket.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.exit(0);
+    }
+
+    public void setChatController(ChatController chatController) {
+        this.chatController = chatController;
     }
 }

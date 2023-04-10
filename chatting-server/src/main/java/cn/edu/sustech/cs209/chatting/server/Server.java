@@ -1,8 +1,12 @@
 package cn.edu.sustech.cs209.chatting.server;
 
 import cn.edu.sustech.cs209.chatting.common.ChatGroup;
+import cn.edu.sustech.cs209.chatting.common.ChatGroupType;
+import cn.edu.sustech.cs209.chatting.common.LocalGroup;
 import cn.edu.sustech.cs209.chatting.common.Message;
-import cn.edu.sustech.cs209.chatting.common.MessageType;
+import cn.edu.sustech.cs209.chatting.common.Request;
+import cn.edu.sustech.cs209.chatting.common.RequestType;
+import cn.edu.sustech.cs209.chatting.common.User;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -15,13 +19,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class Server {
 
     private final int port;
     private final List<ClientHandler> clients = new ArrayList<>();
-    // 维护所有存在的群聊，包括双人和多人的
-    private Map<Integer, ChatGroup> groupsMap = new HashMap<>();
+    private final Map<Integer, ChatGroup> groupsMap = new HashMap<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
     private static int ID = 0;
 
@@ -44,14 +48,14 @@ public class Server {
         }
     }
 
-    private static class ClientHandler implements Runnable {
+    private class ClientHandler implements Runnable {
 
         private final Socket clientSocket;
         private final List<ClientHandler> clients;
         private final Map<Integer, ChatGroup> groupsMap;
         private ObjectInputStream in;
         private ObjectOutputStream out;
-        private String username;
+        private User user = new User("", "");
 
         public ClientHandler(Socket socket, List<ClientHandler> clients,
             Map<Integer, ChatGroup> groupsMap) {
@@ -65,82 +69,157 @@ public class Server {
             try {
                 in = new ObjectInputStream(new BufferedInputStream(clientSocket.getInputStream()));
                 out = new ObjectOutputStream(clientSocket.getOutputStream());
-                Message message;
+                boolean connect = true;
                 while (true) {
-                    message = (Message) in.readObject();
-                    System.out.println("收到客户端消息：" + message.getData());
-                    switch (message.getType()) {
-                        case RequestLogin:
-                            try {
-                                String[] data = message.getData().split(":");
-                                if (!checkUsername(data[0])) {
-                                    throw new Exception("User not exists");
-                                }
-                                if (!checkPassword(data[0], data[1])) {
-                                    throw new Exception("Password is wrong");
-                                }
-                                username = data[0];
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                                this.out.writeObject(
-                                    new Message(System.currentTimeMillis(), "Server", -1,
-                                        e.getMessage(),
-                                        MessageType.LoginFail));
-                                break;
-                            }
-                            clients.forEach((client) -> {
-                                if (client != this) {
-                                    ChatGroup group = new ChatGroup(++ID,
-                                        username + " " + client.username);
-                                    groupsMap.put(ID, group);
-                                }
-                            });
+                    Object obj = in.readObject();
+                    if (obj.getClass().equals(Message.class)) {
+                        Message message = (Message) obj;
+//                        System.out.println(
+//                            "客户端" + this.clientSocket.getRemoteSocketAddress() + "发来消息: "
+//                                + message.getData() + " sendTo: " + message.getSendTo());
+                        if (groupsMap.containsKey(message.getSendTo())) {
+                            groupsMap.get(message.getSendTo()).addMessage(message);
                             this.out.writeObject(
-                                new Message(System.currentTimeMillis(), "Server", -1,
-                                    "Login Successfully", MessageType.LoginSuccess));
-                            break;
-
-                        case Message:
-                            for (Integer id : groupsMap.keySet()) {
-                                if (id == message.getSendTo()) {
-                                    groupsMap.get(id).addMessage(message);
-                                }
-                            }
-                            break;
-
-                        case RequestChatGroup:
-                            // id:name,id:name,...
-                            StringBuilder data = new StringBuilder();
-                            for (ChatGroup g : groupsMap.values()) {
-                                if (g.containUser(username)) {
-                                    data.append(g.getId()).append(":").append(g.getName())
-                                        .append(",");
-                                }
-                            }
+                                new Request<>(RequestType.SendMessage, true, "成功发送消息", null));
+                        } else {
                             this.out.writeObject(
-                                new Message(System.currentTimeMillis(), "Server", -1,
-                                    data.toString(), MessageType.RequestSuccess));
-                            break;
-
-                        case RequestMessage:
-                            int groupId;
-                            try {
-                                groupId = Integer.parseInt(message.getData());
-                                List<Message> messages = groupsMap.get(groupId).getRecord();
-                                for (Message m : messages) {
-                                    m.setType(MessageType.RequestSuccess);
-                                    this.out.writeObject(m);
+                                new Request<>(RequestType.SendMessage, false,
+                                    "发送失败,未找到指定的group:id=" + message.getSendTo(), null));
+                        }
+                    } else if (obj.getClass().equals(Request.class)) {
+//                        System.out.println(
+//                            "客户端" + this.clientSocket.getRemoteSocketAddress()
+//                                + "发来Request, 类型为: " + ((Request) obj).getType()
+//                                + ", 信息为: " + ((Request) obj).getInfo());
+                        switch (((Request<?>) obj).getType()) {
+                            case Signup -> {
+                                System.out.println("Sign up request");
+                                Request<User> signRequest = (Request<User>) obj;
+                                System.out.println(signRequest.getObj().toString());
+                                User newUser = signRequest.getObj();
+                                if (checkUsernameExists(newUser.name())) {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.Signup, false, "用户已存在",
+                                            null));
+                                } else {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.Signup, true, "注册成功",
+                                            null));
                                 }
-                            } catch (Exception e) {
-                                this.out.writeObject(
-                                    new Message(System.currentTimeMillis(), "Server", -1,
-                                        "Request Message Fail", MessageType.RequestFail));
                             }
-                            break;
-
-                        case Disconnect:
-                            break;
-                        default:
+                            case Login -> {
+                                Request<User> loginRequest = (Request<User>) obj;
+                                User loginUser = loginRequest.getObj();
+                                System.out.println(
+                                    loginRequest.getInfo() + ": " + loginUser.toString());
+                                if (checkUserOnline(loginUser.name())) {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.Login, false, "该用户已上线",
+                                            null));
+                                    break;
+                                }
+                                if (!checkPassword(loginUser.name(), loginUser.pwd())) {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.Login, false, "密码错误",
+                                            null));
+                                    break;
+                                }
+                                this.user = new User(loginUser.name(), loginUser.pwd());
+                                this.out.writeObject(
+                                    new Request<>(RequestType.Login, true, "登录成功",
+                                        null));
+                                for (ChatGroup g : groupsMap.values()) {
+                                    if (g.containUser(user)) {
+                                        g.addMessage(new Message("Server", g.getId(),
+                                            "User " + user.name() + " is online"));
+                                    }
+                                }
+                            }
+                            case UserList -> {
+                                List<User> onlineUserList = clients.stream()
+                                    .map(e -> new User(e.user.name(), null)).toList();
+                                this.out.writeObject(
+                                    new Request<>(RequestType.UserList, true,
+                                        "get online user list",
+                                        onlineUserList));
+                            }
+                            case ChatGroupList -> {
+                                List<LocalGroup> groupList = new ArrayList<>();
+                                for (ChatGroup g : groupsMap.values()) {
+                                    if (g.containUser(user)) {
+                                        if (g.getType().equals(ChatGroupType.OneToOneChat)) {
+                                            String str = null;
+                                            for (User u : g.getUsers()) {
+                                                if (!u.equals(user)) {
+                                                    str = u.name();
+                                                    break;
+                                                }
+                                            }
+                                            groupList.add(
+                                                new LocalGroup(g.getId(), str,
+                                                    g.getType()));
+                                        } else if (g.getType().equals(ChatGroupType.GroupChat)) {
+                                            groupList.add(
+                                                new LocalGroup(g.getId(), g.getName(),
+                                                    g.getType()));
+                                        }
+                                    }
+                                }
+                                this.out.writeObject(
+                                    new Request<>(RequestType.ChatGroupList, true,
+                                        "get chat group list Successfully",
+                                        groupList));
+                            }
+                            case ChatGroupMessages -> {
+                                int groupId;
+                                try {
+                                    groupId = ((Request<Integer>) obj).getObj();
+//                                    System.out.println(
+//                                        "request group messages, groupId: " + groupId);
+                                    List<Message> messages = new ArrayList<>(
+                                        groupsMap.get(groupId).getRecord());
+//                                    messages.stream().map(Message::getData)
+//                                        .forEach(System.out::println);
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.ChatGroupMessages, true,
+                                            "Request Message Successfully",
+                                            messages));
+                                } catch (Exception e) {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.ChatGroupMessages, false,
+                                            "Request Message Fail",
+                                            null));
+                                }
+                            }
+                            case CreateChatGroup -> {
+                                Request<ChatGroup> createChatGroupRequest = (Request<ChatGroup>) obj;
+                                ChatGroup newChatGroup = createChatGroupRequest.getObj();
+                                if (newChatGroup.getType().equals(ChatGroupType.OneToOneChat)) {
+                                    for (Map.Entry<Integer, ChatGroup> g : groupsMap.entrySet()) {
+                                        ChatGroup c = g.getValue();
+                                        if (c.oneToOneChatGroupEquals(newChatGroup)) {
+                                            this.out.writeObject(
+                                                new Request<>(RequestType.CreateChatGroup, false,
+                                                    "this one-to-one group exists", c.getId())
+                                            );
+                                            break;
+                                        }
+                                    }
+                                }
+                                newChatGroup.setId(++ID);
+                                groupsMap.put(newChatGroup.getId(), newChatGroup);
+                                this.out.writeObject(
+                                    new Request<>(RequestType.CreateChatGroup, true,
+                                        "create chat successfully", newChatGroup.getId())
+                                );
+                            }
+                            case Disconnect -> connect = false;
+                        }
+                    }
+                    if (!connect) {
+                        System.out.println(
+                            "客户端正常断开：" + clientSocket.getRemoteSocketAddress());
+                        break;
                     }
                 }
             } catch (IOException e) {
@@ -152,19 +231,32 @@ public class Server {
                     in.close();
                     out.close();
                     clientSocket.close();
-                    clients.remove(this);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                for (ChatGroup g : groupsMap.values()) {
+                    if (g.containUser(user)) {
+                        g.addMessage(new Message("Server", g.getId(),
+                            "User " + user.name() + " is offline"));
+                    }
+                }
+                clients.remove(this);
+                /*
+                 * TODO: 持久化储存*/
             }
         }
+    }
 
-        private static boolean checkUsername(String username) {
-            return true;
-        }
+    private boolean checkUserOnline(String username) {
+        return clients.stream().map(e -> e.user.name()).collect(Collectors.toSet())
+            .contains(username);
+    }
 
-        private static boolean checkPassword(String username, String pwd) {
-            return true;
-        }
+    private boolean checkUsernameExists(String username) {
+        return false;
+    }
+
+    private boolean checkPassword(String username, String pwd) {
+        return true;
     }
 }

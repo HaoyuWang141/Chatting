@@ -1,14 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.*?>
+<?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-  xmlns:fx="http://javafx.com/fxml"
-  fx:controller="cn.edu.sustech.cs209.chatting.client.Controller.SignUpController"
-  prefHeight="400.0" prefWidth="600.0">
-
-</AnchorPane>
+<VBox fx:id="vBox" alignment="CENTER" prefHeight="353.0" prefWidth="417.0"
+  xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+  fx:controller="cn.edu.sustech.cs209.chatting.client.Controller.SignUpController">
+  <children>
+    <Label text="注册">
+      <font>
+        <Font size="31.0"/>
+      </font>
+    </Label>
+    <HBox alignment="CENTER" prefHeight="60.0" prefWidth="415.0">
+      <children>
+        <Label text="用户名："/>
+        <TextField fx:id="username"/>
+      </children>
+    </HBox>
+    <HBox alignment="CENTER" prefHeight="60.0" prefWidth="421.0">
+      <children>
+        <Label text="密码："/>
+        <TextField fx:id="password"/>
+      </children>
+    </HBox>
+    <HBox alignment="CENTER" prefHeight="60.0" prefWidth="200.0">
+      <children>
+        <Label text="确认密码："/>
+        <TextField fx:id="confirm"/>
+      </children>
+    </HBox>
+    <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0">
+      <children>
+        <Button mnemonicParsing="false" onAction="#onClickSignupButton" text="注册"/>
+      </children>
+    </HBox>
+  </children>
+</VBox>

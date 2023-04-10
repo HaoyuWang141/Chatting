@@ -3,7 +3,6 @@ package cn.edu.sustech.cs209.chatting.client.Controller;
 import cn.edu.sustech.cs209.chatting.client.Client;
 import java.io.IOException;
 import javafx.application.Application;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -16,12 +15,26 @@ import javafx.stage.Stage;
 
 public class ConnectController extends Application {
 
+    private static final ConnectController connectController = new ConnectController();
+
+    public static ConnectController getConnectController() {
+        return connectController;
+    }
+
     @FXML
     private TextField host;
     @FXML
     private TextField StringPort;
     @FXML
     private VBox vBox;
+
+    @Override
+    public void start(Stage stage) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Connect.fxml"));
+        stage.setScene(new Scene(fxmlLoader.load()));
+        stage.setTitle("Connect");
+        stage.show();
+    }
 
     @FXML
     private void onButtonConnectClick() {
@@ -30,7 +43,7 @@ public class ConnectController extends Application {
             System.out.println(host.getText() + "/" + StringPort.getText());
             port = Integer.parseInt(StringPort.getText());
             Client.Connect(host.getText(), port);
-            new LoginController().start(new Stage());
+            LoginController.getLoginController().start(new Stage());
             vBox.getScene().getWindow().hide();
         } catch (NumberFormatException e) {
             Alert alert = new Alert(AlertType.WARNING);
@@ -43,13 +56,5 @@ public class ConnectController extends Application {
             alert.setHeaderText("连接主机失败");
             alert.showAndWait();
         }
-    }
-
-    @Override
-    public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("Connect.fxml"));
-        stage.setScene(new Scene(fxmlLoader.load()));
-        stage.setTitle("Connect");
-        stage.show();
     }
 }

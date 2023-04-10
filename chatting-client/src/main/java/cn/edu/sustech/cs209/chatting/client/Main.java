@@ -12,6 +12,6 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        new ConnectController().start(new Stage());
+        ConnectController.getConnectController().start(new Stage());
     }
 }
