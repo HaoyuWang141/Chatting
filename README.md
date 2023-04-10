@@ -23,16 +23,18 @@
   - [x] Client select multiple users to start a group chat
   - [x] Client can send text message
   - [ ] Client can send emojis
-  
 + GUI (15 points)
   - [x] Use javafx to implement GUI
   - [x] Main panel to show a list of chats
   - [x] Chat room: a separate chatroom window created for the chat
-  
 + Exception Handling (15 points)
-  - [x] When one Client is offline, other Client will receive
-
+  - [x] When one Client is offline, other clients that have chat with the offline client will receive one  Server message in his chat content that notifies the client is offline.
+  - [x] When Server is offline, all online clients will get a dialog window that notifies the Server is offline. Then the clients can check only history messages of the last chat. He can not begin a one-to-one chat or a group chat.
 + Bonus (12 points)
+  - [ ] Account Management: the server could support user registration and login.
+  - [ ] Sorted Chat List: user could see a list of available chats, sorted by their recent chat activities
+  - [ ] Chat History: can get the chat history of any chat.
+  - [ ] File Transfer
 
 
 
@@ -151,8 +153,8 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 
 ## Exception
 
-1. Server is down: all user will be notified. User can quit by himself elegantly. User can only check the last chat messages. He can not create a new one-to-one chat or group chat.
-2. a user is offline: Server will give all chats of this offline user a extra message to notify he is offline
+1. One Client is offline: Server will give all chats of this offline user a extra message to notify he is offline
+2. Server is down: all user will be notified. User can quit by himself elegantly. User can only check the last chat messages. He can not create a new one-to-one chat or group chat.
 
 
 
