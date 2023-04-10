@@ -4,7 +4,7 @@
 >
 > ID: 11911612
 
-![CourseInfo](https://img.shields.io/badge/sustech--cs209-23sp%3Aassign2-brightgreen)![License](https://img.shields.io/github/license/hezean/chatting)
+![CourseInfo](https://img.shields.io/badge/sustech--cs209-23sp%3Aassign2-brightgreen) ![License](https://img.shields.io/github/license/hezean/chatting)
 
 **Chatting** is a simple online-chat application, based on JavaFX and Socket. In this assignment, you will need to implement a WeChat like program, but much simpler.
 
