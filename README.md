@@ -74,8 +74,9 @@ If you are a Windows user who has not configured Maven environment variables, yo
 - simply click on the "install" option in the "Lifecycle" folder of Maven side bar
 
 <p align="center">
-  <img  src="assets/mvn_command.jpg" height=250px>
+  <img  src="img/assets/mvn_command.jpg" height=250px>
 </p>
+
 
 
 
@@ -100,7 +101,7 @@ mvn javafx:run -pl chatting-client
 ```
 
 Alternatively, you can find the goal in the plugin list, and click on it:
-<img src="assets/idea-maven-javafx-plugin.png" style="zoom:33%;" />
+<img src="img/assets/idea-maven-javafx-plugin.png" width=50% />
 
 
 
