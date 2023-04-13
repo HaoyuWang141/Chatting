@@ -74,7 +74,7 @@ If you are a Windows user who has not configured Maven environment variables, yo
 - simply click on the "install" option in the "Lifecycle" folder of Maven side bar
 
 <p align="center">
-  <img  src="img/assets/mvn_command.jpg" height=250px>
+  <img  src="img/assets/mvn_command.jpg" width=30%>
 </p>
 
 
@@ -101,7 +101,8 @@ mvn javafx:run -pl chatting-client
 ```
 
 Alternatively, you can find the goal in the plugin list, and click on it:
-<img src="img/assets/idea-maven-javafx-plugin.png" width=50% />
+
+<img src="img/assets/idea-maven-javafx-plugin.png" width=30% />
 
 
 
@@ -154,35 +155,35 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 
 1. Connecting Server is failed
 
-   <img src="img\C-connectFailed.png" alt="C-connectFailed" style="zoom: 50%;" />
+   <img src="img\C-connectFailed.png" alt="C-connectFailed" width=50%; />
 
 #### Login
 
 1. username or password is empty
 
-   <img src="img\L-emptyWrong.png" alt="L-emptyWrong" style="zoom: 50%;" />
+   <img src="img\L-emptyWrong.png" alt="L-emptyWrong" width=50%; />
 
 2. username does not exist
 
-   <img src="img\L-userNotExist.png" alt="L-userNotExist" style="zoom: 50%;" />
+   <img src="img\L-userNotExist.png" alt="L-userNotExist" width=50%; />
 
 3. password is wrong
 
-   <img src="img\L-pwdWrong.png" alt="L-pwdWrong" style="zoom: 50%;" />
+   <img src="img\L-pwdWrong.png" alt="L-pwdWrong" width=50%; />
 
 4. user has already been online
 
-   <img src="img\L-userOnlineWrong.png" alt="L-userOnlineWrong" style="zoom:50%;" />
+   <img src="img\L-userOnlineWrong.png" alt="L-userOnlineWrong" width=50%; />
 
 #### Signup
 
 1. username has already exists
 
-   <img src="img\S-userExistWrong.png" alt="S-userExistWrong" style="zoom:50%;" />
+   <img src="img\S-userExistWrong.png" alt="S-userExistWrong" width=50%; />
 
 2. signup successfully
 
-<img src="img\S-Success.png" alt="S-Success" style="zoom:50%;" />
+<img src="img\S-Success.png" alt="S-Success" width=50%; />
 
 ## Design
 
@@ -198,19 +199,19 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 
 1. One Client is offline: Server will give all chats of this offline user a extra message to notify he is offline
 
-   <img src="img\O-offline.png" alt="O-offline" style="zoom:50%;" />
+   <img src="img\O-offline.png" alt="O-offline" width=70%; />
 
    If the offline client is online again, all his chat will get an extra message from Server: "User 'x' is online":
 
-   <img src="img\O-onlineAgain.png" alt="O-onlineAgain" style="zoom:50%;" />
+   <img src="img\O-onlineAgain.png" alt="O-onlineAgain" width=70%; />
 
 2. Server is down: all user will be notified. User can quit by himself elegantly. User can only check the last chat messages. He can not create a new one-to-one chat or group chat.
 
-   <img src="img\SO-serverOffline.png" alt="SO-serverOffline" style="zoom:50%;" />
+   <img src="img\SO-serverOffline.png" alt="SO-serverOffline" width=70%; />
 
    If Client sends message, he will get:
 
-   <img src="img\SO-send.png" alt="SO-send" style="zoom:50%;" />
+   <img src="img\SO-send.png" alt="SO-send" width=70%; />
 
    And Online User is set to be zero.
 
