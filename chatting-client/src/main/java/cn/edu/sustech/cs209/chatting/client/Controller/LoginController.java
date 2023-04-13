@@ -77,7 +77,7 @@ public class LoginController extends Application {
             } else {
                 Alert alert = new Alert(AlertType.WARNING);
                 alert.setTitle("登录失败");
-                alert.setHeaderText("登录失败");
+                alert.setHeaderText("登录失败: " + request.getInfo());
                 alert.showAndWait();
             }
         } catch (NullPointerException e) {

@@ -28,6 +28,7 @@ public class Server {
     private final Map<Integer, ChatGroup> groupsMap = new HashMap<>();
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
     private static int ID = 0;
+    private final List<User> registerUser = new ArrayList<>();
 
     public Server(int port) {
         this.port = port;
@@ -36,10 +37,15 @@ public class Server {
     public void start() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             System.out.println("服务器已启动，监听端口：" + port);
+            registerUser.add(new User("a", "1"));
+            registerUser.add(new User("b", "2"));
+            registerUser.add(new User("c", "3"));
+
             while (true) {
                 Socket socket = serverSocket.accept();
                 System.out.println("客户端已连接：" + socket.getRemoteSocketAddress());
-                ClientHandler clientHandler = new ClientHandler(socket, clients, groupsMap);
+                ClientHandler clientHandler = new ClientHandler(socket, clients, groupsMap,
+                    registerUser);
                 clients.add(clientHandler);
                 executor.execute(clientHandler);
             }
@@ -56,12 +62,14 @@ public class Server {
         private ObjectInputStream in;
         private ObjectOutputStream out;
         private User user = new User("", "");
+        private List<User> registerUser;
 
         public ClientHandler(Socket socket, List<ClientHandler> clients,
-            Map<Integer, ChatGroup> groupsMap) {
+            Map<Integer, ChatGroup> groupsMap, List<User> registerUser) {
             this.clientSocket = socket;
             this.clients = clients;
             this.groupsMap = groupsMap;
+            this.registerUser = registerUser;
         }
 
         @Override
@@ -102,6 +110,7 @@ public class Server {
                                         new Request<>(RequestType.Signup, false, "用户已存在",
                                             null));
                                 } else {
+                                    registerUser.add(newUser);
                                     this.out.writeObject(
                                         new Request<>(RequestType.Signup, true, "注册成功",
                                             null));
@@ -112,15 +121,22 @@ public class Server {
                                 User loginUser = loginRequest.getObj();
                                 System.out.println(
                                     loginRequest.getInfo() + ": " + loginUser.toString());
-                                if (checkUserOnline(loginUser.name())) {
+                                if (checkUsernameExists(loginUser.name())) {
                                     this.out.writeObject(
-                                        new Request<>(RequestType.Login, false, "该用户已上线",
+                                        new Request<>(RequestType.Login, false,
+                                            "用户不存在，请先注册",
                                             null));
                                     break;
                                 }
                                 if (!checkPassword(loginUser.name(), loginUser.pwd())) {
                                     this.out.writeObject(
                                         new Request<>(RequestType.Login, false, "密码错误",
+                                            null));
+                                    break;
+                                }
+                                if (checkUserOnline(loginUser.name())) {
+                                    this.out.writeObject(
+                                        new Request<>(RequestType.Login, false, "该用户已上线",
                                             null));
                                     break;
                                 }
@@ -145,7 +161,21 @@ public class Server {
                             }
                             case ChatGroupList -> {
                                 List<LocalGroup> groupList = new ArrayList<>();
+                                List<ChatGroup> chatGroupList = new ArrayList<>();
                                 for (ChatGroup g : groupsMap.values()) {
+                                    chatGroupList.add(g);
+                                }
+                                chatGroupList.stream().sorted((e1, e2) -> {
+                                    if (e1 == null || e2 == null) {
+                                        return 0;
+                                    }
+                                    if (e1.getLastActiveTime() > e2.getLastActiveTime()) {
+                                        return -1;
+                                    } else if (e1.getLastActiveTime() < e2.getLastActiveTime()) {
+                                        return 1;
+                                    }
+                                    return 0;
+                                }).forEach(g -> {
                                     if (g.containUser(user)) {
                                         if (g.getType().equals(ChatGroupType.OneToOneChat)) {
                                             String str = null;
@@ -164,13 +194,13 @@ public class Server {
                                                     g.getType()));
                                         }
                                     }
-                                }
+                                });
                                 this.out.writeObject(
                                     new Request<>(RequestType.ChatGroupList, true,
                                         "get chat group list Successfully",
                                         groupList));
                             }
-                            case ChatGroupMessages -> {
+                            case MessageList -> {
                                 int groupId;
                                 try {
                                     groupId = ((Request<Integer>) obj).getObj();
@@ -181,12 +211,12 @@ public class Server {
 //                                    messages.stream().map(Message::getData)
 //                                        .forEach(System.out::println);
                                     this.out.writeObject(
-                                        new Request<>(RequestType.ChatGroupMessages, true,
+                                        new Request<>(RequestType.MessageList, true,
                                             "Request Message Successfully",
                                             messages));
                                 } catch (Exception e) {
                                     this.out.writeObject(
-                                        new Request<>(RequestType.ChatGroupMessages, false,
+                                        new Request<>(RequestType.MessageList, false,
                                             "Request Message Fail",
                                             null));
                                 }
@@ -247,16 +277,27 @@ public class Server {
         }
     }
 
-    private boolean checkUserOnline(String username) {
-        return clients.stream().map(e -> e.user.name()).collect(Collectors.toSet())
-            .contains(username);
-    }
-
     private boolean checkUsernameExists(String username) {
-        return false;
+        if (username == null || username.equals("")) {
+            return true;
+        }
+        return registerUser.stream().map(User::name).collect(Collectors.toSet()).contains(username);
     }
 
     private boolean checkPassword(String username, String pwd) {
-        return true;
+        if (username == null || username.equals("") || pwd == null || pwd.equals("")) {
+            return false;
+        }
+        for (User u : registerUser) {
+            if (u.name().equals(username) && u.pwd().equals(pwd)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkUserOnline(String username) {
+        return clients.stream().map(e -> e.user.name()).collect(Collectors.toSet())
+            .contains(username);
     }
 }

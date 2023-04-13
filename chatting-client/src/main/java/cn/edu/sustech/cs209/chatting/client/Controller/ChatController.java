@@ -13,10 +13,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -25,8 +26,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Paint;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -89,7 +96,7 @@ public class ChatController extends Application implements Initializable {
                     Client.getClient().sendRequest(RequestType.UserList, null, null);
                     Client.getClient().sendRequest(RequestType.ChatGroupList, null, null);
                     Client.getClient()
-                        .sendRequest(RequestType.ChatGroupMessages, null, currentChatId);
+                        .sendRequest(RequestType.MessageList, null, currentChatId);
                     while (true) {
                         Thread.sleep(10);
                         if (updateUserListFinished
@@ -166,11 +173,11 @@ public class ChatController extends Application implements Initializable {
         });
 
         VBox box = new VBox(20);
-        box.setPrefSize(300,200);
+        box.setPrefSize(300, 200);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(20, 20, 20, 20));
         Label label = new Label("创建个人聊天");
-        label.setPadding(new Insets(0,20,0,20));
+        label.setPadding(new Insets(0, 20, 0, 20));
         box.getChildren().addAll(label, userSel, okBtn);
         stage.setScene(new Scene(box));
         stage.showAndWait();
@@ -239,7 +246,7 @@ public class ChatController extends Application implements Initializable {
         });
 
         VBox box = new VBox(20);
-        box.setPrefSize(300,200);
+        box.setPrefSize(300, 200);
         box.setAlignment(Pos.CENTER);
         box.setPadding(new Insets(20, 20, 20, 20));
         HBox userSelBox = new HBox(5);
@@ -267,7 +274,7 @@ public class ChatController extends Application implements Initializable {
                     .sendMessage(Client.getClient().getName(), currentChatId,
                         inputArea.getText());
             }
-            inputArea.setText("");
+            inputArea.clear();
         } catch (IOException e) {
             Alert alert = new Alert(AlertType.WARNING);
             alert.setTitle("发送失败");
@@ -288,6 +295,39 @@ public class ChatController extends Application implements Initializable {
         System.out.println("选定的列表项：" + selectedItem);
         if (selectedItem != null) {
             currentChatId = selectedItem.id();
+        }
+    }
+
+    @FXML
+    public void onKeyPressedTextArea(KeyEvent keyEvent) {
+        // 如果按下了回车键
+        if (keyEvent.getCode() == KeyCode.ENTER) {
+            // 获得此时的光标位置。此位置为刚刚输入的换行符之后
+            var caretPosition = this.inputArea.getCaretPosition();
+
+            // 如果已经按下的按键中包含 Control 键
+            if (!keyEvent.isControlDown()) { // 如果输入的不是组合键 `Ctrl+Enter`，去掉换行符，然后将文本发送
+                // 获得输入文本，此文本包含刚刚输入的换行符
+                var text = this.inputArea.getText();
+                // 获得换行符两边的文本
+                var front = text.substring(0, caretPosition - 1);
+                var end = text.substring(caretPosition);
+                this.inputArea.setText(front + end);
+                this.doSendMessage(); // 模拟发送
+
+                /*----- 如果希望发送后保留输入框文本，需要只使用下面这行代码，然后去掉清除文本框的代码 -------*/
+                // this.textArea.positionCaret(caretPosition - 1);
+            } else {
+                // 获得输入文本，此文本不包含刚刚输入的换行符
+                var text = this.inputArea.getText();
+                // 获得光标两边的文本
+                var front = text.substring(0, caretPosition);
+                var end = text.substring(caretPosition);
+                // 在光标处插入换行符
+                this.inputArea.setText(front + System.lineSeparator() + end);
+                // 将光标移至换行符
+                this.inputArea.positionCaret(caretPosition + 1);
+            }
         }
     }
 
@@ -364,11 +404,14 @@ public class ChatController extends Application implements Initializable {
 
                     HBox hBox = new HBox();
                     Label label = new Label(user.name());
-                    label.setPrefSize(100, 20);
-                    label.setWrapText(true);
+                    label.setTextFill(Paint.valueOf("#c67120"));
+                    label.setFont(Font.font(14));
                     label.setAlignment(Pos.CENTER);
-//                    label.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
+                    setStyle("-fx-background-color: #FDD19F");
+                    setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
+                    label.setWrapText(true);
                     hBox.setAlignment(Pos.CENTER);
+                    hBox.setPrefSize(100,30);
                     hBox.getChildren().addAll(label);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
@@ -394,12 +437,20 @@ public class ChatController extends Application implements Initializable {
                     }
 
                     HBox hBox = new HBox();
-                    Label label = new Label(group.name());
-
-                    label.setPrefSize(100, 20);
+                    Label label = new Label();
+                    if (group.type().equals(ChatGroupType.OneToOneChat)) {
+                        label.setText("User: " + group.name());
+                    } else if (group.type().equals(ChatGroupType.GroupChat)) {
+                        label.setText("Group: " + group.name());
+                    }
+                    label.setTextFill(Paint.valueOf("#c67120"));
+                    label.setFont(Font.font(14));
+                    label.setAlignment(Pos.CENTER);
+                    setStyle("-fx-background-color: #FDD19F");
+                    setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
                     label.setWrapText(true);
-//                    label.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
                     hBox.setAlignment(Pos.CENTER);
+                    hBox.setPrefSize(100,30);
                     hBox.getChildren().addAll(label);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
@@ -430,12 +481,15 @@ public class ChatController extends Application implements Initializable {
 
                     HBox wrapper = new HBox();
                     Label nameLabel = new Label(msg.getSentBy());
+                    HBox msgHBOX = new HBox();
                     Label msgLabel = new Label(msg.getData());
+                    msgLabel.setTextFill(Paint.valueOf("#c67120"));
 
                     nameLabel.setPrefSize(50, 20);
                     nameLabel.setWrapText(true);
-                    nameLabel.setStyle("-fx-border-color: black; -fx-border-width: 1px;");
+                    nameLabel.setStyle("-fx-background-color: #FDD19F;");
                     nameLabel.setAlignment(Pos.CENTER);
+                    nameLabel.setTextFill(Paint.valueOf("#c67120"));
 
                     if (msg.getSentBy().equals("Server")) {
                         wrapper.setAlignment(Pos.CENTER);
@@ -450,7 +504,6 @@ public class ChatController extends Application implements Initializable {
                         wrapper.getChildren().addAll(nameLabel, msgLabel);
                         msgLabel.setPadding(new Insets(0, 0, 0, 20));
                     }
-
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(wrapper);
                 }

@@ -16,8 +16,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.List;
 import java.util.Scanner;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 public class Client {
 
@@ -76,7 +74,7 @@ public class Client {
                                 chatController.setChatGroupList(
                                     (List<LocalGroup>) request.getObj());
                                 break;
-                            case ChatGroupMessages:
+                            case MessageList:
                                 chatController.setChatContentList((List<Message>) request.getObj());
                                 break;
                             case CreateChatGroup:

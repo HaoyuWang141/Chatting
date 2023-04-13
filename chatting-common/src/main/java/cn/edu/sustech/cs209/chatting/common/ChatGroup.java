@@ -8,7 +8,6 @@ import java.util.Set;
 
 public class ChatGroup implements Serializable {
 
-
     private int id;
     private String name;
     private User owner;
@@ -24,6 +23,7 @@ public class ChatGroup implements Serializable {
 
     private ChatGroupType type;
     private final List<Message> record;
+    private long lastActiveTime;
 
 
     public ChatGroup(int id, User owner, List<User> users, ChatGroupType type, String name) {
@@ -33,6 +33,7 @@ public class ChatGroup implements Serializable {
         this.type = type;
         this.name = name;
         record = new ArrayList<>();
+        lastActiveTime = -1;
     }
 
     public void addUser(User user) {
@@ -62,6 +63,9 @@ public class ChatGroup implements Serializable {
 
     public void addMessage(Message message) {
         record.add(message);
+        if (message.getTimestamp() > lastActiveTime) {
+            lastActiveTime = message.getTimestamp();
+        }
     }
 
     public int getId() {
@@ -109,5 +113,9 @@ public class ChatGroup implements Serializable {
 
     public void setUsers(Set<User> users) {
         this.users = users;
+    }
+
+    public long getLastActiveTime() {
+        return lastActiveTime;
     }
 }
