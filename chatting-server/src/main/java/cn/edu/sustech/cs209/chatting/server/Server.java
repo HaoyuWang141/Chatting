@@ -121,7 +121,7 @@ public class Server {
                                 User loginUser = loginRequest.getObj();
                                 System.out.println(
                                     loginRequest.getInfo() + ": " + loginUser.toString());
-                                if (checkUsernameExists(loginUser.name())) {
+                                if (!checkUsernameExists(loginUser.name())) {
                                     this.out.writeObject(
                                         new Request<>(RequestType.Login, false,
                                             "用户不存在，请先注册",
