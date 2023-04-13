@@ -298,7 +298,7 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
 ## GUI Color Design
 
-<img src="img\GUI\color.jpg" alt="color" width=50% />
+<img src="img\GUI\color.jpg" alt="color" width=80% />
 
 
 
