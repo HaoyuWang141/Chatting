@@ -12,19 +12,9 @@ public class ChatGroup implements Serializable {
     private String name;
     private User owner;
     private Set<User> users;
-
-    public ChatGroupType getType() {
-        return type;
-    }
-
-    public void setType(ChatGroupType type) {
-        this.type = type;
-    }
-
     private ChatGroupType type;
     private final List<Message> record;
     private long lastActiveTime;
-
 
     public ChatGroup(int id, User owner, List<User> users, ChatGroupType type, String name) {
         this.id = id;
@@ -113,6 +103,14 @@ public class ChatGroup implements Serializable {
 
     public void setUsers(Set<User> users) {
         this.users = users;
+    }
+
+    public ChatGroupType getType() {
+        return type;
+    }
+
+    public void setType(ChatGroupType type) {
+        this.type = type;
     }
 
     public long getLastActiveTime() {

@@ -57,10 +57,6 @@
 We will define the commonly used constants and models in the `chatting-common` model,
 which is the dependency of `chatting-client` and `chatting-server`.
 
-> This design is a common practice in many large projects.
-> But it is not mandatory for you to follow this architecture.
-> You can move the model codes to other places if you want.
-
 Now, the first thing you need to do is to install the parent pom into the local maven repository.
 
 ```shell
@@ -111,11 +107,15 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 ### properties
 
 + `clients`: a list that represents current online clients. 
-+ `groupsMap`: record all chat group, including one-to-one and multi-user. A group uses Id to identify.
++ `groupsMap`: record all chat group, including one-to-one and multi-user. A group uses ID to identify. A chat group object mainly have id, name and maintain a message list.
+
+### Behavior
+
+Server receives the **Request** or **Message** from a Client, records messary info and returns a response to the Client.
 
 
 
-## User
+## Client
 
 ### properties
 
@@ -187,11 +187,52 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 
 ## Design
 
-1. Info:
+1. `Message`对象: 该对象专门用于储存一条消息, 其属性包含:
+   + timestamp: 时间戳, 记录发出消息时的时间
+   + sentBy: String类型, 发送者. 可为某个用户的名称或"Server"
+   + sendTo: int类型, 表示想要发送到的聊天id, 每一个Server中维护的聊天都用id唯一表示
+   + data: 信息内容
+2. 将私聊和群聊视为近乎相同的对象, 称为`ChatGroup`. 它仅通过一个属性加以区分私聊和群聊, 而在行为上没有区别. 所有`ChatGroup`都会被维护在服务器端. 当用户向服务器申请开通任意一类聊天时, 服务器端将创建一个新的`ChatGroup`对象, 该对象包含属性如下:
+   + id: 用以唯一确定一个聊天
+   + name: 对于群聊, 储存自定义的群聊名称; 对于私聊, 不储存内容
+   + owner: 群主, 即申请创建聊天的用户
+   + users: 参与该聊天的用户列表
+   + type: 该聊天的类型时私聊或群聊
+   + record: 消息记录, 以`Message`对象储存
+   + lastActiveTime: 最后一个消息的时间, 用以在用户界面以聊天活跃时间为顺序进行排序
 
-   + Client will only store some necessary info and update that from server periodically. For chat content, Client only maintain the current choose chat messages in local.
+3. 请求与回应: 为完成聊天功能, 客户端将根据需求向服务器端发送一系列的请求, 服务器收到请求后会做出回应. 整个过程通过java socket完成. 建立连接后, 客户端可能发出的请求类型及对应的回应分为以下数种:
 
-   + Server only send info to Client when a Client request specific info. Server maintain all chats and all message.
+   + signup: 申请注册
+
+   + login: 申请登录
+
+   + UserList: 申请在线用户列表. 服务器将返回所有在线用户列表
+
+   + ChatGroupList: 申请本用户所在的全部聊天(包括私聊和群聊), 服务器将以`LocalGroup`的数据类型返回聊天列表. `LocalGroup`仅包含以下属性:
+
+     + id: 识别聊天的唯一标识符, 在用户向某个聊天发送消息时, 将指定该参数
+
+     + name: 用于显示在GUI上的聊天名称, 私聊将显示另一个用户的名称, 群聊直接显示群名
+
+     + type: 用于辨别该聊天是私聊还是群聊
+
+     服务器在发送`LocalGroup`列表时, 将会把列表的顺序以及这三个属性均维护正确. 
+
+     只传递一个聊天的部分信息而不是完整信息的原因是: 用户每次都会请求全部聊天列表, 若此时将全部聊天的全部聊天记录发送, 会传递大量数据且很多数据是冗余的. 因此, 用户维护聊天信息的部分, 并不在该请求中实现.
+
+   + MessageList: 申请给定聊天id的全部聊天内容. 服务器将返回`Message`列表
+
+   + CreateChatGroup: 申请开一个新的聊天(包括私聊和群聊), 服务器会判断是否允许开启新聊天 (开群聊没有限制, 可以开重名群聊, 也可以开多个包含相同用户的群聊; 开私聊的情况, 两个用户之间仅能存在一个私聊). 最终, 服务器返回一个聊天id (新聊天id或已存在的老聊天id).
+
+   + Disconnect: 通知服务器断开连接, 服务器将安全地回收各种资源, 维护用户列表, 通知各群聊或其他用户该用户下线.
+
+   为保证客户端始终能够获取最新的数据, 本工程的实现方式为, 客户端周期性地向服务器发出UserList, ChatGroupList, MessageList三个申请, 并将服务器返回的信息展示在GUI上.
+
+4. 线程间通信: 用户接受消息的线程和javafx的线程之间常常需要进行通信, 这里根据需求采用了两种方式: 
+
+   + 直接转发收到的信息: 采用java中的`Pipe Input/Output Stream`直接将收到的信息转发给指定线程, 在Connect, Signup, Login阶段多采用这种方式.
+   + 调用其他线程的方法: java多线程中, 对象是可以共享的, 因此只要维护好共享对象, 就可以直接调用该对象中需要的方法, 在Chat阶段采用该方式.
 
 
 
@@ -229,9 +270,21 @@ Alternatively, you can find the goal in the plugin list, and click on it:
 
    为TextArea添加key press监听器, 当收到Enter后, 将判定发送消息或换行.
 
-5. 发表情: 尚未解决
+5. 发表情: 尚未解决, 将增加依赖emoji-java的方式进行改进.
+
+   [emoji-java: The missing emoji library for Java](https://github.com/vdurmont/emoji-java)
+
+   [轻量级工具emoji-java处理emoji表情字符](https://blog.csdn.net/qq_44799924/article/details/117114788)
+
+   
 
 6. 发文件: 尚未解决
+
+7. 其他设计思路及优化:
+
+   + 对于私聊, 在两个用户之间建立管道进行通讯. 这种方式有更快的通讯速度和安全性, 即使服务器因为请求多而迟缓, 私聊的通讯也可以不受影响;
+   + 客户端在本地储存全部群聊的聊天记录, 而不是仅当前群聊的聊天记录. 这样在离线时, 客户端仍然可以查看所有的聊天记录. 但这可能涉及到了各个用户端聊天记录与服务器端的同步问题.
+   + 目前的设计中, 在更新聊天记录时, 服务端会发送全部聊天记录. 可以通过客户端申请聊天记录时, 增加参数时间戳, 表示仅申请该时间后的聊天记录, 服务器将发送这一小部分聊天记录, 效率更高.
 
 
 
