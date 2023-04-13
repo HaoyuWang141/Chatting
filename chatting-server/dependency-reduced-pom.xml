@@ -1,32 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <parent>
-    <groupId>cn.edu.sustech.cs209.chatting</groupId>
     <artifactId>chatting</artifactId>
+    <groupId>cn.edu.sustech.cs209.chatting</groupId>
     <version>dev-SNAPSHOT</version>
   </parent>
-
+  <modelVersion>4.0.0</modelVersion>
   <artifactId>chatting-server</artifactId>
-
-  <properties>
-    <main-class.name>cn.edu.sustech.cs209.chatting.server.Main</main-class.name>
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>cn.edu.sustech.cs209.chatting</groupId>
-      <artifactId>chatting-common</artifactId>
-    </dependency>
-  </dependencies>
-
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
           <source>16</source>
@@ -34,7 +17,6 @@
         </configuration>
       </plugin>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>3.4.1</version>
         <executions>
@@ -45,7 +27,7 @@
             </goals>
             <configuration>
               <transformers>
-                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer>
                   <mainClass>${main-class.name}</mainClass>
                 </transformer>
               </transformers>
@@ -55,4 +37,7 @@
       </plugin>
     </plugins>
   </build>
+  <properties>
+    <main-class.name>cn.edu.sustech.cs209.chatting.server.Main</main-class.name>
+  </properties>
 </project>
