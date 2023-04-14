@@ -193,7 +193,7 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
 2. signup successfully
 
-<img src="img\S-Success.png" alt="S-Success" width=50%; />
+   <img src="img\S-Success.png" alt="S-Success" width=50%; />
 
 #### emoji
 
@@ -203,7 +203,7 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
 1. User a send a message "A" in group chat xxx, then xxx will be the first chat in the chat list:
 
-<img src="C:\Users\Haoyu\Desktop\Chatting\img\GUI\sortedChat1.png" alt="sortedChat1" width=70% />
+<img src="img\GUI\sortedChat1.png" alt="sortedChat1" width=70% />
 
 2. Then user a send another message "B" in one-to-one chat with user b. This private chat becomes the last active chat and be the first chat.
 
