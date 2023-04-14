@@ -10,9 +10,9 @@
 
 ## Exhibition
 
-<img src="img\GUI\exhibition1.png" alt="exhibition1" />
+<img src="img\GUI\exhibition1.png" alt="exhibition1" width=70% />
 
-<img src="img\GUI\exhibition2.png" alt="exhibition2" />
+<img src="img\GUI\exhibition2.png" alt="exhibition2" width=70% />
 
 ## Introduction
 
