@@ -40,7 +40,7 @@
   - [x] Client can select another user to start a one-to-one chat
   - [x] Client select multiple users to start a group chat
   - [x] Client can send text messages and receive the messages
-  - [ ] Client can send emojis
+  - [x] Client can send emojis
 + GUI (15 points)
   - [x] Use javafx to implement GUI
   - [x] Main panel to show a list of chats

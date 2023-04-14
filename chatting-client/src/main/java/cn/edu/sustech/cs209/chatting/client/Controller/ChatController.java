@@ -7,6 +7,7 @@ import cn.edu.sustech.cs209.chatting.common.LocalGroup;
 import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
 import cn.edu.sustech.cs209.chatting.common.User;
+import com.vdurmont.emoji.EmojiParser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -481,8 +482,8 @@ public class ChatController extends Application implements Initializable {
 
                     HBox wrapper = new HBox();
                     Label nameLabel = new Label(msg.getSentBy());
-                    HBox msgHBOX = new HBox();
-                    Label msgLabel = new Label(msg.getData());
+                    String msgData = EmojiParser.parseToUnicode(msg.getData());
+                    Label msgLabel = new Label(msgData);
                     msgLabel.setTextFill(Paint.valueOf("#c67120"));
 
                     nameLabel.setPrefSize(50, 20);

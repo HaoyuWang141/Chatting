@@ -8,6 +8,7 @@ import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.Request;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
 import cn.edu.sustech.cs209.chatting.common.User;
+import com.vdurmont.emoji.EmojiParser;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -117,7 +118,8 @@ public class Client {
     }
 
     public void sendMessage(String sendBy, int sendTo, String data) throws IOException {
-        Message message = new Message(sendBy, sendTo, data);
+        String sendData = EmojiParser.parseToAliases(data);
+        Message message = new Message(sendBy, sendTo, sendData);
         out.writeObject(message);
         out.flush();
     }
