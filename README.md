@@ -10,10 +10,11 @@
 
 ## Exhibition
 
+<p align="center">
 <img src="img\GUI\exhibition1.png" alt="exhibition1" width=70% />
-
 <img src="img\GUI\exhibition2.png" alt="exhibition2" width=70% />
-
+</p>
+  
 ## Introduction
 
 + Server: multithreading + thread pool: 每个线程负责连接一个Client请求
