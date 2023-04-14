@@ -14,7 +14,7 @@
 <img src="img\GUI\exhibition1.png" alt="exhibition1" width=70% />
 <img src="img\GUI\exhibition2.png" alt="exhibition2" width=70% />
 </p>
-  
+
 ## Introduction
 
 + Server: multithreading + thread pool: 每个线程负责连接一个Client请求
@@ -313,6 +313,8 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
    [轻量级工具emoji-java处理emoji表情字符](https://blog.csdn.net/qq_44799924/article/details/117114788)
 
+   增加表情按钮
+
 6. 发文件: 尚未解决
 
 7. 其他设计思路及优化:
@@ -320,6 +322,10 @@ Server receives the **Request** or **Message** from a Client, records messary in
    + 对于私聊, 在两个用户之间建立管道进行通讯. 这种方式有更快的通讯速度和安全性, 即使服务器因为请求多而迟缓, 私聊的通讯也可以不受影响;
    + 客户端在本地储存全部群聊的聊天记录, 而不是仅当前群聊的聊天记录. 这样在离线时, 客户端仍然可以查看所有的聊天记录. 但这可能涉及到了各个用户端聊天记录与服务器端的同步问题.
    + 目前的设计中, 在更新聊天记录时, 服务端会发送全部聊天记录. 可以通过客户端申请聊天记录时, 增加参数时间戳, 表示仅申请该时间后的聊天记录, 服务器将发送这一小部分聊天记录, 效率更高.
+
+8. 接受方有消息提示
+
+9. 多人聊天显示群聊列表
 
 
 

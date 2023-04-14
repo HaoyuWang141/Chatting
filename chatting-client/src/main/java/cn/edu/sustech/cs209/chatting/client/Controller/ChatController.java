@@ -8,9 +8,11 @@ import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
 import cn.edu.sustech.cs209.chatting.common.User;
 import com.vdurmont.emoji.EmojiParser;
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -35,6 +37,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 
@@ -42,6 +46,7 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class ChatController extends Application implements Initializable {
 
@@ -57,6 +62,8 @@ public class ChatController extends Application implements Initializable {
     public ListView<LocalGroup> chatGroupListView;
     @FXML
     private TextArea inputArea;
+    @FXML
+    private Button sendFile;
     public List<User> userList;
     public List<LocalGroup> chatGroupList;
     public List<Message> chatContentList;
@@ -270,11 +277,15 @@ public class ChatController extends Application implements Initializable {
     @FXML
     public void doSendMessage() {
         try {
-            if (inputArea.getText() != null || inputArea.getText().equals("")) {
-                Client.getClient()
-                    .sendMessage(Client.getClient().getName(), currentChatId,
-                        inputArea.getText());
+            if (inputArea.getText() == null || inputArea.getText().equals("")) {
+                return;
             }
+            if (currentChatId <= 0) {
+                return;
+            }
+            Client.getClient()
+                .sendMessage(Client.getClient().getName(), currentChatId,
+                    inputArea.getText());
             inputArea.clear();
         } catch (IOException e) {
             Alert alert = new Alert(AlertType.WARNING);
@@ -293,7 +304,7 @@ public class ChatController extends Application implements Initializable {
         // 获取选定的列表项
         LocalGroup selectedItem = selectionModel.getSelectedItem();
         // 执行操作
-        System.out.println("选定的列表项：" + selectedItem);
+        System.out.println("choose chat: " + selectedItem);
         if (selectedItem != null) {
             currentChatId = selectedItem.id();
         }
@@ -412,7 +423,7 @@ public class ChatController extends Application implements Initializable {
                     setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
                     label.setWrapText(true);
                     hBox.setAlignment(Pos.CENTER);
-                    hBox.setPrefSize(100,30);
+                    hBox.setPrefSize(100, 30);
                     hBox.getChildren().addAll(label);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
@@ -451,7 +462,7 @@ public class ChatController extends Application implements Initializable {
                     setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
                     label.setWrapText(true);
                     hBox.setAlignment(Pos.CENTER);
-                    hBox.setPrefSize(100,30);
+                    hBox.setPrefSize(100, 30);
                     hBox.getChildren().addAll(label);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
@@ -522,6 +533,27 @@ public class ChatController extends Application implements Initializable {
                 "您已与服务器断开连接, 您只能查看最后一个聊天的历史消息，但是不能查看其他聊天信息、创建聊天、接受新消息或发送消息");
             alert.showAndWait();
         });
+    }
+
+    @FXML
+    public void showFileOpenDialog() {
+        // 创建一个默认的文件选择器
+        FileChooser fileChooser = new FileChooser();
+        // 获取系统用户名
+        Map<String, String> map = System.getenv();
+        String PCUserName = map.get("USERNAME");
+        // 设置默认显示的文件夹
+        fileChooser.setInitialDirectory(new File("C:/Users/" + PCUserName + "/Desktop/"));
+        // 添加可用的文件过滤器（FileNameExtensionFilter 的第一个参数是描述, 后面是需要过滤的文件扩展名）
+//        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("(txt)", "txt"));
+        // 设置默认使用的文件过滤器（FileNameExtensionFilter 的第一个参数是描述, 后面是需要过滤的文件扩展名 可变参数）
+//        fileChooser.setFileFilter(new FileNameExtensionFilter("(txt)", "txt"));
+
+        File file = fileChooser.showOpenDialog(sendFile.getScene().getWindow());
+        if (file != null) {
+            System.out.println(file.getAbsolutePath());
+        }
+
     }
 }
 
