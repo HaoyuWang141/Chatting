@@ -155,7 +155,7 @@ Server receives the **Request** or **Message** from a Client, records messary in
    + chat group list: other user may start a new chat with current user
    + chat content list: update chat content (1. other user may send new message; 2. current user may open another chat)
 
-### Exceptions in Client
+### Exceptions and Functions
 
 #### Connect
 
@@ -181,6 +181,10 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
    <img src="img\L-userOnlineWrong.png" alt="L-userOnlineWrong" width=50%; />
 
+5. if use can login, he will go to the Chat GUI:
+
+   <img src="img\GUI\chatGUI.png" alt="chatGUI" width=70% />
+
 #### Signup
 
 1. username has already exists
@@ -190,6 +194,30 @@ Server receives the **Request** or **Message** from a Client, records messary in
 2. signup successfully
 
 <img src="img\S-Success.png" alt="S-Success" width=50%; />
+
+#### emoji
+
+<img src="img\GUI\emoji.png" alt="emoji" width=70% />
+
+#### sorted chat list
+
+1. User a send a message "A" in group chat xxx, then xxx will be the first chat in the chat list:
+
+<img src="C:\Users\Haoyu\Desktop\Chatting\img\GUI\sortedChat1.png" alt="sortedChat1" width=70% />
+
+2. Then user a send another message "B" in one-to-one chat with user b. This private chat becomes the last active chat and be the first chat.
+
+<img src="img\GUI\sortedChat2.png" alt="sortedChat2" width=70% />
+
+#### chat history
+
+1. User a is offline
+
+<img src="img\GUI\chatHistory1.png" alt="chatHistory1" width=70% />
+
+2. User a is online again, and he can get history messages.
+
+<img src="img\GUI\chhatHistory2.png" alt="chhatHistory2" width=70% />
 
 ## Design
 
@@ -268,23 +296,21 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
 ## Difficulty
 
-1. `ListView` 控件, 在被选中时, 会发生高频刷新闪烁问题: C#有double buffer的解决措施, 但是javafx没找到好办法
+1. `ListView` 控件, 在被选中时, 会发生高频刷新闪烁问题: C#有double buffer的解决措施, 但是javafx没找到好办法. 暂且使用0.5s进行一次刷新的方式缓解.
 
 2. javafx的fxml文件编写较复杂: 采用图形化界面 *javafx Scene Builder* 进行界面构建, 非常高效.
 
-3. 客户端GUI界面关闭后, 仍有未处理的线程占用系统资源或占用端口: 在类`Client`中增加`close()`方法, 当负责GUI界面的线程关闭时, 需要执行该`close()`方法, 将其他必要的线程也全部终止, 并向Server发出`Disconnect`请求.
+3. 客户端GUI界面关闭后, 该用户仍然在连接着服务器, 原因是仍有未处理的线程占用系统资源或占用端口: 在类`Client`中增加`close()`方法, 当负责GUI界面的线程关闭时, 需要执行该`close()`方法, 将其他必要的线程也全部终止, 并向Server发出`Disconnect`请求.
 
 4. 回车发送消息：[JavaFX 实现回车发送信息，Ctrl+Enter换行](https://blog.csdn.net/wangpaiblog/article/details/121506912)
 
    为TextArea添加key press监听器, 当收到Enter后, 将判定发送消息或换行.
 
-5. 发表情: 尚未解决, 将增加依赖emoji-java的方式进行改进.
+5. 发表情: 使用依赖emoji-java处理表情, 非常方便.
 
    [emoji-java: The missing emoji library for Java](https://github.com/vdurmont/emoji-java)
 
    [轻量级工具emoji-java处理emoji表情字符](https://blog.csdn.net/qq_44799924/article/details/117114788)
-
-   
 
 6. 发文件: 尚未解决
 
