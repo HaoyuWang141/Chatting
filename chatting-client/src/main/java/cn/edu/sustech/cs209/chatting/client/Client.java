@@ -3,18 +3,23 @@ package cn.edu.sustech.cs209.chatting.client;
 import cn.edu.sustech.cs209.chatting.client.Controller.ChatController;
 import cn.edu.sustech.cs209.chatting.client.Controller.LoginController;
 import cn.edu.sustech.cs209.chatting.client.Controller.SignUpController;
-import cn.edu.sustech.cs209.chatting.common.LocalGroup;
+import cn.edu.sustech.cs209.chatting.common.ChatContent;
+import cn.edu.sustech.cs209.chatting.common.LocalChat;
 import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.Request;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
+import cn.edu.sustech.cs209.chatting.common.UploadedFile;
 import cn.edu.sustech.cs209.chatting.common.User;
 import com.vdurmont.emoji.EmojiParser;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
 import java.net.Socket;
 import java.net.SocketException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Scanner;
 
@@ -66,17 +71,18 @@ public class Client {
                                     .writeObject(request);
                                 break;
                             case SendMessage:
+                            case SendFile:
 //                                System.out.println("CLient收到了返回值SendMessage");
                                 break;
                             case UserList:
                                 chatController.setUserList((List<User>) request.getObj());
                                 break;
                             case ChatGroupList:
-                                chatController.setChatGroupList(
-                                    (List<LocalGroup>) request.getObj());
+                                chatController.setChatList(
+                                    (List<LocalChat>) request.getObj());
                                 break;
-                            case MessageList:
-                                chatController.setChatContentList((List<Message>) request.getObj());
+                            case ChatContent:
+                                chatController.setChatContent((ChatContent) request.getObj());
                                 break;
                             case CreateChatGroup:
                                 chatController.setCurrentChatId((Integer) request.getObj());
@@ -121,6 +127,16 @@ public class Client {
         String sendData = EmojiParser.parseToAliases(data);
         Message message = new Message(sendBy, sendTo, sendData);
         out.writeObject(message);
+        out.flush();
+    }
+
+    public void sendFile(String sendBy, int sendTo, File file) throws IOException {
+        if (sendBy == null || file == null) {
+            return;
+        }
+        String data = Files.readString(Paths.get(file.getAbsolutePath()));
+        UploadedFile uploadedFile = new UploadedFile(file.getName(), data, sendBy, sendTo);
+        out.writeObject(uploadedFile);
         out.flush();
     }
 

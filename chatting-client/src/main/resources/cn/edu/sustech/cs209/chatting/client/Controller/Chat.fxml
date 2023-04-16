@@ -24,7 +24,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<VBox prefHeight="400.0" prefWidth="700.0" style="-fx-background-color: #FDD19F;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.edu.sustech.cs209.chatting.client.Controller.ChatController">
+<VBox prefHeight="500.0" prefWidth="800.0" style="-fx-background-color: #FDD19F;" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cn.edu.sustech.cs209.chatting.client.Controller.ChatController">
   <children>
     <MenuBar style="-fx-background-color: #FDD19F;" VBox.vgrow="NEVER">
       <menus>
@@ -36,11 +36,33 @@
         </Menu>
       </menus>
     </MenuBar>
-    <SplitPane dividerPositions="0.25, 0.75" focusTraversable="true" style="-fx-background-color: FDD19F;" VBox.vgrow="ALWAYS">
+    <SplitPane dividerPositions="0.10025062656641603, 0.2932330827067669" focusTraversable="true" style="-fx-background-color: FDD19F;" VBox.vgrow="ALWAYS">
       <items>
         <VBox>
           <children>
-          <VBox alignment="CENTER" style="-fx-background-color: #f4f5f6;">
+            <VBox alignment="CENTER" prefHeight="130.0" style="-fx-background-color: #f5f6f7;">
+              <children>
+                <Label text="Online " textFill="#c67120">
+                           <font>
+                              <Font name="System Bold Italic" size="14.0" />
+                           </font>
+                           <VBox.margin>
+                              <Insets bottom="20.0" top="20.0" />
+                           </VBox.margin></Label>
+              </children>
+                     <VBox.margin>
+                        <Insets bottom="4.0" />
+                     </VBox.margin>
+            </VBox>
+        <ListView fx:id="userListView" style="-fx-background-color: #f5f6f7;">
+                     <VBox.margin>
+                        <Insets />
+                     </VBox.margin></ListView>
+          </children>
+        </VBox>
+        <VBox>
+          <children>
+          <VBox alignment="CENTER" prefHeight="130.0" style="-fx-background-color: #f4f5f6;">
             <children>
               <Label alignment="CENTER" maxHeight="1.7976931348623157E308" style="-fx-background-color: #F4f5f6;" text="Username:" textFill="#c67120">
                 <font>
@@ -63,15 +85,39 @@
                         <Insets bottom="4.0" />
                      </VBox.margin>
           </VBox>
-        <ListView fx:id="chatGroupListView" onMouseClicked="#setChatGroupId" style="-fx-background-color: #f5f6f7;" />
+        <ListView fx:id="chatListView" onMouseClicked="#setChatGroupId" style="-fx-background-color: #f5f6f7;" />
           </children>
         </VBox>
-        <SplitPane dividerPositions="0.6536144578313253" orientation="VERTICAL" prefHeight="300.0" style="-fx-divider-width: 2px; -fx-padding: 0px;">
+        <SplitPane dividerPositions="0.6758620689655173" orientation="VERTICAL" prefHeight="300.0" style="-fx-divider-width: 2px; -fx-padding: 0px;">
           <items>
-            <ListView fx:id="chatContentListView" style="-fx-background-color: #f5f6f7;">
-                     <padding>
-                        <Insets top="10.0" />
-                     </padding></ListView>
+                  <HBox style="-fx-background-color: #FDD19F;">
+                     <children>
+                  <ListView fx:id="chatMessageListView" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" prefHeight="289.0" prefWidth="436.0" style="-fx-background-color: #f5f6f7;">
+                           <HBox.margin>
+                              <Insets />
+                           </HBox.margin>
+                        </ListView>
+                        <VBox maxWidth="120.0" prefWidth="120.0">
+                           <children>
+                              <VBox alignment="TOP_CENTER">
+                                 <children>
+                                    <Label text="Chat User" textFill="#c67120" />
+                                    <ListView fx:id="chatUserListView" />
+                                 </children>
+                              </VBox>
+                              <VBox alignment="TOP_CENTER">
+                                 <children>
+                                    <Label text="Files" textFill="#c67120" />
+                                    <ListView fx:id="chatFileListView" />
+                                 </children>
+                              </VBox>
+                           </children>
+                           <HBox.margin>
+                              <Insets left="2.0" right="2.0" />
+                           </HBox.margin>
+                        </VBox>
+                     </children>
+                  </HBox>
             <VBox alignment="BOTTOM_RIGHT" style="-fx-background-color: white;">
               <children>
                 <TextArea fx:id="inputArea" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" onKeyPressed="#onKeyPressedTextArea" style="-fx-border-width: 0; -fx-background-color: white;">
@@ -80,7 +126,7 @@
                            </VBox.margin></TextArea>
                         <HBox alignment="CENTER_RIGHT" maxHeight="33.0" prefHeight="33.0" prefWidth="339.0">
                            <children>
-                              <Button maxHeight="23.0" maxWidth="54.0" mnemonicParsing="false" prefHeight="23.0" prefWidth="54.0" style="-fx-background-color: #fdd19f;" text="eomji" textFill="C67120">
+                              <Button maxHeight="23.0" maxWidth="54.0" mnemonicParsing="false" onAction="#chooseEmoji" prefHeight="23.0" prefWidth="54.0" style="-fx-background-color: #fdd19f;" text="eomji" textFill="C67120">
                                  <font>
                                     <Font name="System Bold" size="12.0" />
                                  </font>
@@ -110,28 +156,6 @@
             </VBox>
           </items>
         </SplitPane>
-        <VBox>
-          <children>
-            <VBox alignment="CENTER" style="-fx-background-color: #f5f6f7;">
-              <children>
-                <Label text="Online User" textFill="#c67120">
-                           <font>
-                              <Font name="System Bold Italic" size="18.0" />
-                           </font>
-                           <VBox.margin>
-                              <Insets bottom="20.0" top="20.0" />
-                           </VBox.margin></Label>
-              </children>
-                     <VBox.margin>
-                        <Insets bottom="4.0" />
-                     </VBox.margin>
-            </VBox>
-        <ListView fx:id="userListView" style="-fx-background-color: #f5f6f7;">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin></ListView>
-          </children>
-        </VBox>
       </items>
     </SplitPane>
     <HBox id="HBox" alignment="CENTER_RIGHT" prefHeight="26.0" prefWidth="700.0" spacing="5.0" style="-fx-background-color: #f5f6f7;" VBox.vgrow="NEVER">

@@ -19,6 +19,11 @@ public record User(String name, String pwd) implements Serializable {
     }
 
     @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
+
+    @Override
     public String toString() {
         return "User{" +
             "name='" + name + '\'' +

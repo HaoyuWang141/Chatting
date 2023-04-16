@@ -1,15 +1,24 @@
 package cn.edu.sustech.cs209.chatting.client.Controller;
 
 import cn.edu.sustech.cs209.chatting.client.Client;
+import cn.edu.sustech.cs209.chatting.common.ChatContent;
 import cn.edu.sustech.cs209.chatting.common.ChatGroup;
 import cn.edu.sustech.cs209.chatting.common.ChatGroupType;
-import cn.edu.sustech.cs209.chatting.common.LocalGroup;
+import cn.edu.sustech.cs209.chatting.common.UploadedFile;
+import cn.edu.sustech.cs209.chatting.common.LocalChat;
 import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
 import cn.edu.sustech.cs209.chatting.common.User;
 import com.vdurmont.emoji.EmojiParser;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -31,12 +37,11 @@ import javafx.scene.control.*;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Background;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Paint;
 import javafx.scene.text.Font;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
@@ -46,7 +51,6 @@ import java.net.URL;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicReference;
-import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class ChatController extends Application implements Initializable {
 
@@ -57,20 +61,26 @@ public class ChatController extends Application implements Initializable {
     @FXML
     public ListView<User> userListView;
     @FXML
-    public ListView<Message> chatContentListView;
+    public ListView<LocalChat> chatListView;
     @FXML
-    public ListView<LocalGroup> chatGroupListView;
+    public ListView<Message> chatMessageListView;
     @FXML
     private TextArea inputArea;
     @FXML
     private Button sendFile;
+    @FXML
+    private ListView<User> chatUserListView;
+    @FXML
+    private ListView<UploadedFile> chatFileListView;
     public List<User> userList;
-    public List<LocalGroup> chatGroupList;
-    public List<Message> chatContentList;
+    public List<LocalChat> chatList;
+    public List<Message> chatMessageList;
+    public List<User> chatUserList;
+    public List<UploadedFile> chatFileList;
 
 
     private int currentChatId;
-    boolean updateUserListFinished, updateChatGroupListFinished, updateChatContentListFinished;
+    boolean updateUserListFinished, updateChatGroupListFinished, updateChatContentFinished;
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -88,15 +98,17 @@ public class ChatController extends Application implements Initializable {
         Client.getClient().setChatController(this);
         currentUsername.setText(Client.getClient().getName());
         userListView.setCellFactory(new UserCellFactory());
-        chatContentListView.setCellFactory(new MessageCellFactory());
-        chatGroupListView.setCellFactory(new GroupCellFactory());
+        chatListView.setCellFactory(new GroupCellFactory());
+        chatMessageListView.setCellFactory(new MessageCellFactory());
+        chatUserListView.setCellFactory(new UserCellFactory());
+        chatFileListView.setCellFactory(new FileCellFactory());
         userList = new ArrayList<>();
-        chatGroupList = new ArrayList<>();
-        chatContentList = new ArrayList<>();
+        chatList = new ArrayList<>();
+        chatMessageList = new ArrayList<>();
         currentChatId = -1;
         updateUserListFinished = false;
         updateChatGroupListFinished = false;
-        updateChatContentListFinished = false;
+        updateChatContentFinished = false;
 
         Thread requestThread = new Thread(() -> {
             while (true) {
@@ -104,15 +116,15 @@ public class ChatController extends Application implements Initializable {
                     Client.getClient().sendRequest(RequestType.UserList, null, null);
                     Client.getClient().sendRequest(RequestType.ChatGroupList, null, null);
                     Client.getClient()
-                        .sendRequest(RequestType.MessageList, null, currentChatId);
+                        .sendRequest(RequestType.ChatContent, null, currentChatId);
                     while (true) {
                         Thread.sleep(10);
                         if (updateUserListFinished
                             & updateChatGroupListFinished
-                            & updateChatContentListFinished) {
+                            & updateChatContentFinished) {
                             updateUserListFinished = false;
                             updateChatGroupListFinished = false;
-                            updateChatContentListFinished = false;
+                            updateChatContentFinished = false;
                             break;
                         }
                     }
@@ -151,7 +163,7 @@ public class ChatController extends Application implements Initializable {
         okBtn.setOnAction(e -> {
             user.set(userSel.getSelectionModel().getSelectedItem());
             AtomicBoolean chatIsExisted = new AtomicBoolean(false);
-            chatGroupList.forEach(e1 -> {
+            chatList.forEach(e1 -> {
                 if (e1.type().equals(ChatGroupType.OneToOneChat) && e1.name()
                     .equals(user.get())) {
                     currentChatId = e1.id();
@@ -300,9 +312,9 @@ public class ChatController extends Application implements Initializable {
     @FXML
     public void setChatGroupId() {
         // 获取选择模型
-        MultipleSelectionModel<LocalGroup> selectionModel = chatGroupListView.getSelectionModel();
+        MultipleSelectionModel<LocalChat> selectionModel = chatListView.getSelectionModel();
         // 获取选定的列表项
-        LocalGroup selectedItem = selectionModel.getSelectedItem();
+        LocalChat selectedItem = selectionModel.getSelectedItem();
         // 执行操作
         System.out.println("choose chat: " + selectedItem);
         if (selectedItem != null) {
@@ -356,41 +368,51 @@ public class ChatController extends Application implements Initializable {
         });
     }
 
-    public void setChatGroupList(List<LocalGroup> groupList) {
+    public void setChatList(List<LocalChat> groupList) {
         if (groupList == null) {
-            chatGroupList = new ArrayList<>();
+            chatList = new ArrayList<>();
         } else {
-            chatGroupList = new ArrayList<>(groupList);
+            chatList = new ArrayList<>(groupList);
         }
         updateChatGroupListFinished = true;
         Platform.runLater(() -> {
-            ObservableList<LocalGroup> localGroupObservableList = FXCollections.observableArrayList();
-            localGroupObservableList.addAll(chatGroupList);
-            chatGroupListView.setItems(localGroupObservableList);
+            ObservableList<LocalChat> localChatObservableList = FXCollections.observableArrayList();
+            localChatObservableList.addAll(chatList);
+            chatListView.setItems(localChatObservableList);
         });
     }
 
-    public void setChatContentList(List<Message> messageList) {
-        if (messageList == null) {
-            chatContentList = new ArrayList<>();
+    public void setChatContent(ChatContent chatContent) {
+        if (chatContent == null) {
+            chatMessageList = new ArrayList<>();
+            chatUserList = new ArrayList<>();
+            chatFileList = new ArrayList<>();
         } else {
-            chatContentList = new ArrayList<>(messageList);
+            chatMessageList = new ArrayList<>(chatContent.messages());
+            chatUserList = new ArrayList<>(chatContent.users());
+            chatFileList = new ArrayList<>(chatContent.files());
         }
-        updateChatContentListFinished = true;
         Platform.runLater(() -> {
             if (createNewChat) {
                 createNewChat = false;
-                MultipleSelectionModel<LocalGroup> selectionModel = chatGroupListView.getSelectionModel();
-                for (int i = 0; i < chatGroupList.size(); i++) {
-                    if (chatGroupList.get(i).id() == currentChatId) {
+                MultipleSelectionModel<LocalChat> selectionModel = chatListView.getSelectionModel();
+                for (int i = 0; i < chatList.size(); i++) {
+                    if (chatList.get(i).id() == currentChatId) {
                         selectionModel.select(i);
                         break;
                     }
                 }
             }
             ObservableList<Message> messageObservableList = FXCollections.observableArrayList();
-            messageObservableList.addAll(chatContentList);
-            chatContentListView.setItems(messageObservableList);
+            messageObservableList.addAll(chatMessageList);
+            chatMessageListView.setItems(messageObservableList);
+            ObservableList<User> userObservableList = FXCollections.observableArrayList();
+            userObservableList.addAll(chatUserList);
+            chatUserListView.setItems(userObservableList);
+            ObservableList<UploadedFile> uploadedFileObservableList = FXCollections.observableArrayList();
+            uploadedFileObservableList.addAll(chatFileList);
+            chatFileListView.setItems(uploadedFileObservableList);
+            updateChatContentFinished = true;
         });
     }
 
@@ -423,7 +445,7 @@ public class ChatController extends Application implements Initializable {
                     setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
                     label.setWrapText(true);
                     hBox.setAlignment(Pos.CENTER);
-                    hBox.setPrefSize(100, 30);
+                    hBox.setPrefSize(USE_COMPUTED_SIZE, 30);
                     hBox.getChildren().addAll(label);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
@@ -433,14 +455,14 @@ public class ChatController extends Application implements Initializable {
     }
 
     private class GroupCellFactory implements
-        Callback<ListView<LocalGroup>, ListCell<LocalGroup>> {
+        Callback<ListView<LocalChat>, ListCell<LocalChat>> {
 
         @Override
-        public ListCell<LocalGroup> call(ListView<LocalGroup> param) { // 回调函数
-            return new ListCell<LocalGroup>() {
+        public ListCell<LocalChat> call(ListView<LocalChat> param) { // 回调函数
+            return new ListCell<LocalChat>() {
 
                 @Override
-                public void updateItem(LocalGroup group, boolean empty) { // 更新列表项
+                public void updateItem(LocalChat group, boolean empty) { // 更新列表项
                     super.updateItem(group, empty);
                     if (empty || Objects.isNull(group)) { // 列表或消息为空
                         setGraphic(null); // 设置图形为空
@@ -449,21 +471,32 @@ public class ChatController extends Application implements Initializable {
                     }
 
                     HBox hBox = new HBox();
-                    Label label = new Label();
+                    Label chatName = new Label();
+                    Label hasNewMessage = new Label();
+
                     if (group.type().equals(ChatGroupType.OneToOneChat)) {
-                        label.setText("User: " + group.name());
+                        chatName.setText("User: " + group.name());
                     } else if (group.type().equals(ChatGroupType.GroupChat)) {
-                        label.setText("Group: " + group.name());
+                        chatName.setText("Group: " + group.name());
                     }
-                    label.setTextFill(Paint.valueOf("#c67120"));
-                    label.setFont(Font.font(14));
-                    label.setAlignment(Pos.CENTER);
+                    chatName.setTextFill(Paint.valueOf("#c67120"));
+                    chatName.setFont(Font.font(14));
+                    chatName.setAlignment(Pos.CENTER);
                     setStyle("-fx-background-color: #FDD19F");
                     setOnMouseClicked(event -> setStyle("-fx-background-color: #FDD19F"));
-                    label.setWrapText(true);
-                    hBox.setAlignment(Pos.CENTER);
+                    chatName.setWrapText(true);
+
+                    hasNewMessage.setPadding(new Insets(0, 0, 0, 10));
+                    hasNewMessage.setTextFill(Paint.valueOf("#c67120"));
+                    if (group.hasNewMessage()) {
+                        hasNewMessage.setText("新消息");
+                    } else {
+                        hasNewMessage.setText("");
+                    }
+
+                    hBox.setAlignment(Pos.CENTER_LEFT);
                     hBox.setPrefSize(100, 30);
-                    hBox.getChildren().addAll(label);
+                    hBox.getChildren().addAll(chatName, hasNewMessage);
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
                     setGraphic(hBox);
                 }
@@ -523,6 +556,76 @@ public class ChatController extends Application implements Initializable {
         }
     }
 
+    private class FileCellFactory implements
+        Callback<ListView<UploadedFile>, ListCell<UploadedFile>> {
+
+        @Override
+        public ListCell<UploadedFile> call(ListView<UploadedFile> param) { // 回调函数
+            return new ListCell<UploadedFile>() {
+
+                @Override
+                public void updateItem(UploadedFile uploadedFile, boolean empty) { // 更新列表项
+                    super.updateItem(uploadedFile, empty);
+                    if (empty || Objects.isNull(uploadedFile)) { // 列表或消息为空
+                        setGraphic(null); // 设置图形为空
+                        setText(null); // 设置列表为空
+                        return;
+                    }
+
+                    HBox wrapper = new HBox();
+                    Label nameLabel = new Label(uploadedFile.getName());
+                    nameLabel.setPrefSize(50, 20);
+                    nameLabel.setWrapText(true);
+                    nameLabel.setStyle("-fx-background-color: #FDD19F;");
+                    nameLabel.setAlignment(Pos.CENTER_LEFT);
+                    nameLabel.setTextFill(Paint.valueOf("#c67120"));
+                    Button btn = new Button("下载");
+                    btn.setOnMouseClicked(e -> {
+                        DirectoryChooser directoryChooser = new DirectoryChooser();
+                        Map<String, String> map = System.getenv();
+                        String PCUserName = map.get("USERNAME");
+                        directoryChooser.setInitialDirectory(new File("C:/Users/" + PCUserName + "/Desktop/test/"));
+                        File downloadFolder = directoryChooser.showDialog(
+                            sendFile.getScene().getWindow());
+                        if (downloadFolder != null) {
+                            if (!downloadFolder.exists()) {
+                                downloadFolder.mkdirs();// mkdirs创建多级目录
+                            }
+                            File downloadFile = new File(
+                                downloadFolder.getAbsolutePath() + "/" + uploadedFile.getName());
+                            FileWriter writer = null;
+                            try {
+                                // 二、检查目标文件是否存在，不存在则创建
+                                if (!downloadFile.exists()) {
+                                    downloadFile.createNewFile();// 创建目标文件
+                                }
+                                // 三、向目标文件中写入内容
+                                // FileWriter(File file, boolean append)，append为true时为追加模式，false或缺省则为覆盖模式
+                                writer = new FileWriter(downloadFile, false);
+                                writer.append(uploadedFile.getData());
+                                writer.flush();
+                            } catch (IOException e1) {
+                                e1.printStackTrace();
+                            } finally {
+                                if (writer != null) {
+                                    try {
+                                        writer.close();
+                                    } catch (IOException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    wrapper.setAlignment(Pos.CENTER);
+                    wrapper.getChildren().addAll(nameLabel, btn);
+                    setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+                    setGraphic(wrapper);
+                }
+            };
+        }
+    }
+
     public void serverDown() {
         Platform.runLater(() -> {
             onlineUserCnt.setText("Online User: 0");
@@ -543,17 +646,55 @@ public class ChatController extends Application implements Initializable {
         Map<String, String> map = System.getenv();
         String PCUserName = map.get("USERNAME");
         // 设置默认显示的文件夹
-        fileChooser.setInitialDirectory(new File("C:/Users/" + PCUserName + "/Desktop/"));
-        // 添加可用的文件过滤器（FileNameExtensionFilter 的第一个参数是描述, 后面是需要过滤的文件扩展名）
-//        fileChooser.addChoosableFileFilter(new FileNameExtensionFilter("(txt)", "txt"));
-        // 设置默认使用的文件过滤器（FileNameExtensionFilter 的第一个参数是描述, 后面是需要过滤的文件扩展名 可变参数）
-//        fileChooser.setFileFilter(new FileNameExtensionFilter("(txt)", "txt"));
-
+        fileChooser.setInitialDirectory(new File("C:/Users/" + PCUserName + "/Desktop/test/"));
+        // 添加可用的文件过滤器(ExtensionFilter 的第一个参数是描述, 后面是需要过滤的文件扩展名）
+        fileChooser.getExtensionFilters().addAll(
+            new ExtensionFilter("ALl Files", "*.*"),
+            new ExtensionFilter("Markdown", "*.md"),
+            new ExtensionFilter("Docx", "*.docx")
+        );
+//        fileChooser.setSelectedExtensionFilter();
         File file = fileChooser.showOpenDialog(sendFile.getScene().getWindow());
         if (file != null) {
             System.out.println(file.getAbsolutePath());
+            try {
+                Client.getClient().sendFile(Client.getClient().getName(), currentChatId, file);
+            } catch (IOException e) {
+                Alert alert = new Alert(AlertType.ERROR);
+                alert.setTitle("网络错误");
+                alert.setHeaderText(
+                    "您与服务器的网络已断开，上传文件失败");
+                alert.showAndWait();
+            }
         }
 
+    }
+
+    @FXML
+    public void chooseEmoji() {
+        Stage stage = new Stage();
+        HBox box = new HBox(20);
+        box.setPrefSize(300, 200);
+        List<Button> emojiList = new ArrayList<>();
+        try {
+            File f = new File("src/main/resources/cn/edu/sustech/cs209/chatting/client/Controller/emoji.txt");
+            String[] data = Files.readString(Paths.get(f.getAbsolutePath())).split(" ");
+            for (String e : data) {
+                Button b = new Button(e);
+                b.setOnMouseClicked((z)->{
+                    inputArea.setText(inputArea.getText()+b.getText());
+                });
+                emojiList.add(b);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        box.getChildren().addAll(emojiList);
+        stage.setTitle("emoji");
+        stage.setScene(new Scene(box));
+        stage.showAndWait();
     }
 }
 

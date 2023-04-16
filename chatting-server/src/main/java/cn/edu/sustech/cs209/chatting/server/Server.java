@@ -2,10 +2,11 @@ package cn.edu.sustech.cs209.chatting.server;
 
 import cn.edu.sustech.cs209.chatting.common.ChatGroup;
 import cn.edu.sustech.cs209.chatting.common.ChatGroupType;
-import cn.edu.sustech.cs209.chatting.common.LocalGroup;
+import cn.edu.sustech.cs209.chatting.common.LocalChat;
 import cn.edu.sustech.cs209.chatting.common.Message;
 import cn.edu.sustech.cs209.chatting.common.Request;
 import cn.edu.sustech.cs209.chatting.common.RequestType;
+import cn.edu.sustech.cs209.chatting.common.UploadedFile;
 import cn.edu.sustech.cs209.chatting.common.User;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -92,7 +93,19 @@ public class Server {
                         } else {
                             this.out.writeObject(
                                 new Request<>(RequestType.SendMessage, false,
-                                    "发送失败,未找到指定的group:id=" + message.getSendTo(), null));
+                                    "发送消息失败,未找到指定的group:id=" + message.getSendTo(),
+                                    null));
+                        }
+                    } else if (obj.getClass().equals(UploadedFile.class)) {
+                        UploadedFile file = (UploadedFile) obj;
+                        if (groupsMap.containsKey(file.getSendTo())) {
+                            groupsMap.get(file.getSendTo()).addFile(file);
+                            this.out.writeObject(
+                                new Request<>(RequestType.SendFile, true, "成功发送消息", null));
+                        } else {
+                            this.out.writeObject(
+                                new Request<>(RequestType.SendFile, false,
+                                    "发送文件失败,未找到指定的group:id=" + file.getSendTo(), null));
                         }
                     } else if (obj.getClass().equals(Request.class)) {
 //                        System.out.println(
@@ -153,6 +166,7 @@ public class Server {
                             }
                             case UserList -> {
                                 List<User> onlineUserList = clients.stream()
+                                    .filter((e) -> !e.user.name().equals(""))
                                     .map(e -> new User(e.user.name(), null)).toList();
                                 this.out.writeObject(
                                     new Request<>(RequestType.UserList, true,
@@ -160,7 +174,7 @@ public class Server {
                                         onlineUserList));
                             }
                             case ChatGroupList -> {
-                                List<LocalGroup> groupList = new ArrayList<>();
+                                List<LocalChat> groupList = new ArrayList<>();
                                 List<ChatGroup> chatGroupList = new ArrayList<>();
                                 for (ChatGroup g : groupsMap.values()) {
                                     chatGroupList.add(g);
@@ -186,12 +200,12 @@ public class Server {
                                                 }
                                             }
                                             groupList.add(
-                                                new LocalGroup(g.getId(), str,
-                                                    g.getType()));
+                                                new LocalChat(g.getId(), str,
+                                                    g.getType(), g.hasNewMessage(user)));
                                         } else if (g.getType().equals(ChatGroupType.GroupChat)) {
                                             groupList.add(
-                                                new LocalGroup(g.getId(), g.getName(),
-                                                    g.getType()));
+                                                new LocalChat(g.getId(), g.getName(),
+                                                    g.getType(), g.hasNewMessage(user)));
                                         }
                                     }
                                 });
@@ -200,24 +214,20 @@ public class Server {
                                         "get chat group list Successfully",
                                         groupList));
                             }
-                            case MessageList -> {
+                            case ChatContent -> {
                                 int groupId;
                                 try {
                                     groupId = ((Request<Integer>) obj).getObj();
-//                                    System.out.println(
-//                                        "request group messages, groupId: " + groupId);
-                                    List<Message> messages = new ArrayList<>(
-                                        groupsMap.get(groupId).getRecord());
-//                                    messages.stream().map(Message::getData)
-//                                        .forEach(System.out::println);
+                                    groupsMap.get(groupId).readNewMessage(user);
                                     this.out.writeObject(
-                                        new Request<>(RequestType.MessageList, true,
-                                            "Request Message Successfully",
-                                            messages));
+                                        new Request<>(RequestType.ChatContent, true,
+                                            "Request Chat Content Successfully",
+                                            groupsMap.get(groupId).getChatContent()
+                                        ));
                                 } catch (Exception e) {
                                     this.out.writeObject(
-                                        new Request<>(RequestType.MessageList, false,
-                                            "Request Message Fail",
+                                        new Request<>(RequestType.ChatContent, false,
+                                            "Request Chat Content Fail",
                                             null));
                                 }
                             }

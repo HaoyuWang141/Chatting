@@ -41,6 +41,7 @@
   - [x] Client can select another user to start a one-to-one chat
   - [x] Client select multiple users to start a group chat
   - [x] Client can send text messages and receive the messages
+  - [x] When Client receives new message, it will be a notification in chat list
   - [x] Client can send emojis
 + GUI (15 points)
   - [x] Use javafx to implement GUI
@@ -53,7 +54,7 @@
   - [x] Account Management: the server could support user registration and login.
   - [x] Sorted Chat List: user could see a list of available chats, sorted by their recent chat activities
   - [x] Chat History: client can get the chat history.
-  - [ ] File Transfer
+  - [x] File Transfer
 
 
 
@@ -220,6 +221,12 @@ Server receives the **Request** or **Message** from a Client, records messary in
 
 <img src="img\GUI\chhatHistory2.png" alt="chhatHistory2" width=70% />
 
+#### New Message Notify
+
+<img src="img\GUI\newMessage.png" alt="newMessage" width=70% />
+
+
+
 ## Design
 
 1. `Message`对象: 该对象专门用于储存一条消息, 其属性包含:
@@ -323,7 +330,7 @@ Server receives the **Request** or **Message** from a Client, records messary in
    + 客户端在本地储存全部群聊的聊天记录, 而不是仅当前群聊的聊天记录. 这样在离线时, 客户端仍然可以查看所有的聊天记录. 但这可能涉及到了各个用户端聊天记录与服务器端的同步问题.
    + 目前的设计中, 在更新聊天记录时, 服务端会发送全部聊天记录. 可以通过客户端申请聊天记录时, 增加参数时间戳, 表示仅申请该时间后的聊天记录, 服务器将发送这一小部分聊天记录, 效率更高.
 
-8. 接受方有消息提示
+8. 接受方有新消息提示
 
 9. 多人聊天显示群聊列表
 
