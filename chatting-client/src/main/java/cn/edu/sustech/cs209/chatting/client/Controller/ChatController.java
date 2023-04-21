@@ -504,11 +504,6 @@ public class ChatController extends Application implements Initializable {
         }
     }
 
-    /**
-     * You may change the cell factory if you changed the design of {@code Message} model. Hint: you
-     * may also define a cell factory for the chats displayed in the left panel, or simply override
-     * the toString method.
-     */
     private class MessageCellFactory implements Callback<ListView<Message>, ListCell<Message>> {
 
         @Override
