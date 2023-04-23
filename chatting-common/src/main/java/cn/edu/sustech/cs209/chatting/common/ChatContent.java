@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 
 public record ChatContent(List<Message> messages, List<User> users,
-                          List<UploadedFile> files) implements
-    Serializable {
+                          List<UploadedFile> files) implements Serializable {
 
 }

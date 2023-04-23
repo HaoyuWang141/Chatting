@@ -6,12 +6,12 @@ import javafx.stage.Stage;
 
 public class Main extends Application {
 
-    public static void main(String[] args) {
-        launch();
-    }
+  public static void main(String[] args) {
+    launch();
+  }
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        ConnectController.getConnectController().start(new Stage());
-    }
+  @Override
+  public void start(Stage stage) throws Exception {
+    ConnectController.getConnectController().start(new Stage());
+  }
 }
