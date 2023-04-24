@@ -34,7 +34,6 @@ public class Client {
   private String name;
   private Socket socket;
   public ChatController chatController;
-  public Long time;
 
   private Client(String host, int port) {
     this.host = host;
@@ -51,71 +50,67 @@ public class Client {
   }
 
   private void start() throws IOException {
-    try {
-      socket = new Socket(host, port);
-      System.out.println("Connect to Server: " + socket.getRemoteSocketAddress());
-      out = new ObjectOutputStream(socket.getOutputStream());
-      in = new ObjectInputStream(socket.getInputStream());
-      Thread receiveThread = new Thread(() -> {
-        while (true) {
-          try {
-            Request<?> request = (Request) in.readObject();
-            // System.out.println("Message from Server: " + request.getInfo());
-            switch (request.getType()) {
-              case Signup:
-                SignUpController.getSignUpController().getOos()
-                    .writeObject(request);
-                break;
-              case Login:
-                LoginController.getLoginController().getOos()
-                    .writeObject(request);
-                break;
-              case SendMessage:
-              case SendFile:
-                // System.out.println("CLient收到了返回值SendMessage");
-                break;
-              case UserList:
-                chatController.setUserList((List<User>) request.getObj());
-                break;
-              case ChatGroupList:
-                chatController.setChatList(
-                    (List<LocalChat>) request.getObj());
-                break;
-              case ChatContent:
-                chatController.setChatContent((ChatContent) request.getObj());
-                break;
-              case CreateChatGroup:
-                chatController.setCurrentChatId((Integer) request.getObj());
-                break;
-              default:
-            }
-          } catch (NullPointerException e) {
-            e.printStackTrace();
-          } catch (IOException e) {
-            System.out.println(e.getMessage());
-            if (chatController != null) {
-              chatController.serverDown();
-            } else {
-              System.exit(1);
-            }
-            break;
-          } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+    socket = new Socket(host, port);
+    System.out.println("Connect to Server: " + socket.getRemoteSocketAddress());
+    out = new ObjectOutputStream(socket.getOutputStream());
+    in = new ObjectInputStream(socket.getInputStream());
+
+    Thread receiveThread = new Thread(() -> {
+      while (true) {
+        try {
+          Request<?> request = (Request) in.readObject();
+          // System.out.println("Message from Server: " + request.getInfo());
+          switch (request.getType()) {
+            case Signup:
+              SignUpController.getSignUpController().getOos()
+                  .writeObject(request);
+              break;
+            case Login:
+              LoginController.getLoginController().getOos()
+                  .writeObject(request);
+              break;
+            case SendMessage:
+            case SendFile:
+              // System.out.println("CLient收到了返回值SendMessage");
+              break;
+            case UserList:
+              chatController.setUserList((List<User>) request.getObj());
+              break;
+            case ChatGroupList:
+              chatController.setChatList(
+                  (List<LocalChat>) request.getObj());
+              break;
+            case ChatContent:
+              chatController.setChatContent((ChatContent) request.getObj());
+              break;
+            case CreateChatGroup:
+              chatController.setCurrentChatId((Integer) request.getObj());
+              break;
+            default:
+          }
+        } catch (NullPointerException e) {
+          e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+          e.printStackTrace();
+          System.exit(1);
+        } catch (SocketException e) {
+          System.out.println(e.getMessage());
+          in = null;
+          out = null;
+          socket = null;
+          if (chatController != null) {
+            chatController.serverDown();
+          } else {
             System.exit(1);
           }
+          break;
+        } catch (IOException e) {
+          e.printStackTrace();
+          System.exit(1);
         }
-      });
-      receiveThread.start();
-    } catch (ConnectException e) {
-      // e.printStackTrace();
-      throw e;
-    } catch (SocketException e) {
-      e.printStackTrace();
-      System.out.println(
-          socket.getInetAddress().getHostAddress() + " disconnected from the Server");
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+      }
+    });
+    receiveThread.start();
   }
 
   public <T> void sendRequest(RequestType type, String info, T obj) throws IOException {

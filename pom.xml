@@ -35,18 +35,7 @@
         </dependencies>
     </dependencyManagement>
   <dependencies>
-    <dependency>
-      <groupId>org.json</groupId>
-      <artifactId>json</artifactId>
-      <version>20230227</version>
-      <scope>compile</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.vdurmont</groupId>
-      <artifactId>emoji-java</artifactId>
-      <version>5.1.1</version>
-      <scope>compile</scope>
-    </dependency>
+
   </dependencies>
 
   <build>

@@ -47,6 +47,7 @@ public class Server {
         System.out.println("客户端已连接：" + socket.getRemoteSocketAddress());
         ClientHandler clientHandler = new ClientHandler(socket, clients, groupsMap,
             registerUser);
+        System.out.println(socket);
         clients.add(clientHandler);
         executor.execute(clientHandler);
       }
@@ -268,9 +269,15 @@ public class Server {
         e.printStackTrace();
       } finally {
         try {
-          in.close();
-          out.close();
-          clientSocket.close();
+          if (in != null) {
+            in.close();
+          }
+          if (out != null) {
+            out.close();
+          }
+          if (clientSocket != null) {
+            clientSocket.close();
+          }
         } catch (IOException e) {
           e.printStackTrace();
         }
@@ -281,8 +288,6 @@ public class Server {
           }
         }
         clients.remove(this);
-        /*
-         * TODO: 持久化储存*/
       }
     }
   }

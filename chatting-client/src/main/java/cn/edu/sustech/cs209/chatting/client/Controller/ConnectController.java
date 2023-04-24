@@ -54,6 +54,7 @@ public class ConnectController extends Application {
       Alert alert = new Alert(AlertType.ERROR);
       alert.setTitle("连接错误");
       alert.setHeaderText("连接主机失败");
+      alert.setContentText(e.getMessage());
       alert.showAndWait();
     }
   }
